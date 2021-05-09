@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.IntStream;
 
+import com.dan.pgm.mspedidos.services.PedidoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -40,21 +41,10 @@ import reactor.core.publisher.Mono;
 @Api(value = "PedidoResource", description = "Permite gestionar los pedidos")
 public class PedidoResource {
 	
-	/*
-	@Autowired
-	PedidoService pedidoSrv;
 
-	public ResponseEntity<String> crearPedido(@RequestBody Pedido unPedido){
-		if(unPedido.getObra()==null) {
-			return ResponseEntity.badRequest().body("Debe elegir una obra");
-		}
-		if(unPedido.getDetalle()==null || unPedido.getDetalle().isEmpty() ) {
-			return ResponseEntity.badRequest().body("Debe agregar items al pedido");
-		}
-		pedidoSrv.crearPedido(unPedido);
-		return ResponseEntity.status(HttpStatus.CREATED).body("OK");
-	}
-	*/
+	@Autowired
+    PedidoService pedidoSrv;
+
 	private static final List<Pedido> listaPedidos = new ArrayList<>();
 	
 	private static final String GET_OBRA = "/api/obra/{id}";
@@ -63,17 +53,30 @@ public class PedidoResource {
 	
     @PostMapping
     @ApiOperation(value = "Carga un pedido")
-    public ResponseEntity<Pedido> crear(@RequestBody Pedido nuevo){
-    	System.out.println(" crear pedido "+ nuevo);
+    public ResponseEntity<String> crear(@RequestBody Pedido unPedido){
+    	/*System.out.println(" crear pedido "+ nuevo);
         nuevo.setId(ID_GEN++);
+
         listaPedidos.add(nuevo);
-        return ResponseEntity.ok(nuevo);
+        return ResponseEntity.ok(nuevo);*/
+
+        System.out.println(" crear pedido "+ unPedido);
+        unPedido.setId(ID_GEN++);
+
+        if(unPedido.getObra()==null) {
+            return ResponseEntity.badRequest().body("Debe elegir una obra");
+        }
+        if(unPedido.getDetalle()==null || unPedido.getDetalle().isEmpty() ) {
+            return ResponseEntity.badRequest().body("Debe agregar items al pedido");
+        }
+        pedidoSrv.crearPedido(unPedido);
+        return ResponseEntity.status(HttpStatus.CREATED).body("OK");
     }
     
     @PostMapping(path = "/{idPedido}/detalle")
     @ApiOperation(value = "Carga un detalle de pedido")
     public ResponseEntity<Pedido> agregarItem(@PathVariable Integer idPedido, @RequestBody DetallePedido nuevo){
-    	System.out.println(" agregar item a pedido "+ nuevo);
+    	/*System.out.println(" agregar item a pedido "+ nuevo);
     	Optional<Pedido> pedidoPorActualizar = listaPedidos
     													.stream()
     													.filter(pedido -> pedido.getId().equals(idPedido))
@@ -87,7 +90,9 @@ public class PedidoResource {
         pedido.getDetalle().add(nuevo);
         System.out.println("Lista después de modificación: "+listaPedidos);
         
-        return ResponseEntity.ok(pedido);
+        return ResponseEntity.ok(pedido);*/
+        // TODO ver una vez implementada la bdd
+        return ResponseEntity.ok(pedidoSrv.agregarDetallePedido(idPedido, nuevo));
     }
     
     @PutMapping(path = "/{idPedido}")
@@ -99,7 +104,7 @@ public class PedidoResource {
         @ApiResponse(code = 404, message = "El ID no existe")
     })
     public ResponseEntity<Pedido> actualizar(@RequestBody Pedido nuevo,  @PathVariable Integer idPedido){
-        OptionalInt indexOpt =   IntStream.range(0, listaPedidos.size())
+        /*OptionalInt indexOpt =   IntStream.range(0, listaPedidos.size())
         .filter(i -> listaPedidos.get(i).getId().equals(idPedido))
         .findFirst();
 
@@ -108,13 +113,15 @@ public class PedidoResource {
             return ResponseEntity.ok(nuevo);
         } else {
             return ResponseEntity.notFound().build();
-        }
+        }*/
+        //TODO revisar cuando esté la bdd implementada
+        return ResponseEntity.of(pedidoSrv.actualizarPedido(nuevo, idPedido));
     }
     
     @DeleteMapping(path = "/{id}")
     @ApiOperation(value = "Borra un pedido por id")
     public ResponseEntity<Pedido> borrar(@PathVariable Integer id){
-        OptionalInt indexOpt =   IntStream.range(0, listaPedidos.size())
+        /*OptionalInt indexOpt =   IntStream.range(0, listaPedidos.size())
         .filter(i -> listaPedidos.get(i).getId().equals(id))
         .findFirst();
 
@@ -123,13 +130,18 @@ public class PedidoResource {
             return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.notFound().build();
+        }*/
+        boolean result = pedidoSrv.borrarPedido(id);
+        if(result){
+            return ResponseEntity.ok().build();
         }
+        return ResponseEntity.notFound().build();
     }
     
     @DeleteMapping(path = "/{id}/detalle/{idDetalle}")
     @ApiOperation(value = "Borra un detalle de pedido por id")
     public ResponseEntity<Pedido> borrarDetalle(@PathVariable Integer id, @PathVariable Integer idDetalle){
-        OptionalInt indexOpt =   IntStream.range(0, listaPedidos.size())
+        /* OptionalInt indexOpt =   IntStream.range(0, listaPedidos.size())
         .filter(i -> listaPedidos.get(i).getId().equals(id))
         .findFirst();
 
@@ -145,34 +157,41 @@ public class PedidoResource {
         	}
         } else {
             return ResponseEntity.notFound().build();
+        }*/
+        boolean result = pedidoSrv.borrarDetalleDePedido(id, idDetalle);
+        if(result){
+            return ResponseEntity.ok().build();
         }
+        return ResponseEntity.notFound().build();
     }
     
     @GetMapping(path = "/{id}")
     @ApiOperation(value = "Busca un pedido por id")
     public ResponseEntity<Pedido> getPedidoById(@PathVariable Integer id){
-    	 Optional<Pedido> c =  listaPedidos
+    	 /*Optional<Pedido> c =  listaPedidos
                  .stream()
                  .filter(unP -> unP.getId().equals(id))
                  .findFirst();
-         return ResponseEntity.of(c);
+         return ResponseEntity.of(c);*/
+        return ResponseEntity.of(pedidoSrv.buscarPedidoPorId(id));
     }
     
     @GetMapping(path = "/obra/{id}")
     @ApiOperation(value = "Busca un pedido por id de obra")
     public ResponseEntity<Pedido> getPedidoByIdDeObra(@PathVariable Integer id){
-    	 Optional<Pedido> c =  listaPedidos
+    	 /*Optional<Pedido> c =  listaPedidos
                  .stream()
                  .filter(unP -> unP.getObra().getId().equals(id))
                  .findFirst();
-         return ResponseEntity.of(c);
+         return ResponseEntity.of(c);*/
+        return ResponseEntity.of(pedidoSrv.buscarPedidoPorIdObra(id));
     }
     
     @GetMapping
     @ApiOperation(value = "Busca un pedido por id de cliente y/o cuit")
-    public ResponseEntity<List<Pedido>> obraPorNombre(@RequestParam(name="idCliente", required = false) Integer idCliente, @RequestParam(name="cuit", required = false) String cuit){
+    public ResponseEntity<List<Pedido>> pedidoPorIdClienteCuit(@RequestParam(name="idCliente", required = false) Integer idCliente, @RequestParam(name="cuit", required = false) String cuit){
     	
-    	List<Pedido> listaPedidosFinal = new ArrayList<>(listaPedidos);
+    	/*List<Pedido> listaPedidosFinal = new ArrayList<>(listaPedidos);
     	System.out.println("idCliente: " + idCliente);
     	System.out.println("cuit: " + cuit);
     	
@@ -205,13 +224,14 @@ public class PedidoResource {
     	
     	System.out.println("Lista a devolver: " + listaPedidosFinal);
        
-        return ResponseEntity.ok(listaPedidosFinal);
+        return ResponseEntity.ok(listaPedidosFinal);*/
+        return ResponseEntity.of(pedidoSrv.pedidoPorIdClienteCuit(idCliente, cuit));
     }
     
     @GetMapping(path = "/{id}/detalle/{idDetalle}")
     @ApiOperation(value = "Busca un detalle de pedido por id")
     public ResponseEntity<DetallePedido> getDetalleDePedidoById(@PathVariable Integer id, @PathVariable Integer idDetalle){
-    	OptionalInt indexOpt =   IntStream.range(0, listaPedidos.size())
+    	/*OptionalInt indexOpt =   IntStream.range(0, listaPedidos.size())
     	        .filter(i -> listaPedidos.get(i).getId().equals(id))
     	        .findFirst();
     	
@@ -223,7 +243,8 @@ public class PedidoResource {
     		return ResponseEntity.of(detallePedido);
     	} else {
     		return ResponseEntity.notFound().build();
-    	}
+    	}*/
+        return ResponseEntity.of(pedidoSrv.buscarDetallePorId(id, idDetalle));
     }
     
     public ObraDTO getObraPorId(Integer obraPedido) {
