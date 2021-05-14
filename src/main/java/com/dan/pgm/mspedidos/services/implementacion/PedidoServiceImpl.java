@@ -94,11 +94,11 @@ public class PedidoServiceImpl implements PedidoService {
     }
 
 
-    boolean verificarStock(Producto p, Integer cantidad) {
+    public boolean verificarStock(Producto p, Integer cantidad) {
         return materialSrv.stockDisponible(p)>=cantidad;
     }
 
-    boolean esDeBajoRiesgo(Obra o, Double saldoNuevo) {
+    public boolean esDeBajoRiesgo(Obra o, Double saldoNuevo) {
         Double maximoSaldoNegativo = clienteSrv.maximoSaldoNegativo(o);
         Boolean tieneSaldo = Math.abs(saldoNuevo) < maximoSaldoNegativo;
         return tieneSaldo;
