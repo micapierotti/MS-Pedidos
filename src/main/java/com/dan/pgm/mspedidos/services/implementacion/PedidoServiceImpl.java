@@ -8,6 +8,7 @@ import com.dan.pgm.mspedidos.services.PedidoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -91,6 +92,13 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     public Optional<DetallePedido> buscarDetallePorId(Integer idPedido, Integer idDetalle) {
         return Optional.empty();
+    }
+
+    //TODO Terminar método una vez esté implementada la bdd
+    @Override
+    public boolean verificarExistenciaDePedidos(ArrayList<Integer> idsDeObras) {
+
+        return false;
     }
 
 
