@@ -246,6 +246,13 @@ public class PedidoResource {
     	}*/
         return ResponseEntity.of(pedidoSrv.buscarDetallePorId(id, idDetalle));
     }
+
+    @GetMapping(path = "/existenPedidos")
+    @ApiOperation(value = "Devuelve si alguna de las obras recibidas tiene un pedido en curso")
+    public boolean verificarExistenciaDePedidos(@RequestBody ArrayList<Integer> idsDeObras){
+
+        return pedidoSrv.verificarExistenciaDePedidos(idsDeObras);
+    }
     
     public ObraDTO getObraPorId(Integer obraPedido) {
     	

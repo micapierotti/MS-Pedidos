@@ -3,6 +3,7 @@ package com.dan.pgm.mspedidos.services;
 import com.dan.pgm.mspedidos.domain.DetallePedido;
 import com.dan.pgm.mspedidos.domain.Pedido;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,5 +18,6 @@ public interface PedidoService {
     public Optional<Pedido> buscarPedidoPorIdObra(Integer id);
     public Optional<List<Pedido>> pedidoPorIdClienteCuit(Integer idCliente, String cuit);
     public Optional<DetallePedido> buscarDetallePorId(Integer idPedido, Integer idDetalle);
+    public boolean verificarExistenciaDePedidos(ArrayList<Integer> idsDeObras);
 
 }

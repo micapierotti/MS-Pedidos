@@ -8,6 +8,7 @@ import com.dan.pgm.mspedidos.services.PedidoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -93,12 +94,19 @@ public class PedidoServiceImpl implements PedidoService {
         return Optional.empty();
     }
 
+    //TODO Terminar método una vez esté implementada la bdd
+    @Override
+    public boolean verificarExistenciaDePedidos(ArrayList<Integer> idsDeObras) {
 
-    boolean verificarStock(Producto p, Integer cantidad) {
+        return false;
+    }
+
+
+    public boolean verificarStock(Producto p, Integer cantidad) {
         return materialSrv.stockDisponible(p)>=cantidad;
     }
 
-    boolean esDeBajoRiesgo(Obra o, Double saldoNuevo) {
+    public boolean esDeBajoRiesgo(Obra o, Double saldoNuevo) {
         Double maximoSaldoNegativo = clienteSrv.maximoSaldoNegativo(o);
         Boolean tieneSaldo = Math.abs(saldoNuevo) < maximoSaldoNegativo;
         return tieneSaldo;
