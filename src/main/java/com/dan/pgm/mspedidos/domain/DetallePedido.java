@@ -1,7 +1,13 @@
 package com.dan.pgm.mspedidos.domain;
+import javax.persistence.*;
 
+
+@Entity
 public class DetallePedido {
+	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
+	@OneToOne
+	@JoinColumn(name = "PROD_ID")
 	private Producto producto;
 	private Integer cantidad;
 	private Double precio;
