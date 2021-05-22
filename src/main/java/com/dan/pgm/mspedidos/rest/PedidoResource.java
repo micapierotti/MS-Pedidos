@@ -114,8 +114,7 @@ public class PedidoResource {
         } else {
             return ResponseEntity.notFound().build();
         }*/
-        //TODO revisar cuando esté la bdd implementada
-        return ResponseEntity.of(pedidoSrv.actualizarPedido(nuevo, idPedido));
+        return ResponseEntity.ok(pedidoSrv.actualizarPedido(nuevo, idPedido));
     }
     
     @DeleteMapping(path = "/{id}")
@@ -225,7 +224,7 @@ public class PedidoResource {
     	System.out.println("Lista a devolver: " + listaPedidosFinal);
        
         return ResponseEntity.ok(listaPedidosFinal);*/
-        return ResponseEntity.of(pedidoSrv.pedidoPorIdClienteCuit(idCliente, cuit));
+        return ResponseEntity.ok(pedidoSrv.pedidoPorIdClienteCuit(idCliente, cuit));
     }
     
     @GetMapping(path = "/{id}/detalle/{idDetalle}")
@@ -244,7 +243,7 @@ public class PedidoResource {
     	} else {
     		return ResponseEntity.notFound().build();
     	}*/
-        return ResponseEntity.of(pedidoSrv.buscarDetallePorId(id, idDetalle));
+        return ResponseEntity.ok(pedidoSrv.buscarDetallePorId(id, idDetalle));
     }
 
     @GetMapping(path = "/existenPedidos")
