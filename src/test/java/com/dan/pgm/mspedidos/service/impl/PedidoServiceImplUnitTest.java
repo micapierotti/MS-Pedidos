@@ -8,10 +8,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import com.dan.pgm.mspedidos.domain.DetallePedido;
-import com.dan.pgm.mspedidos.domain.Obra;
-import com.dan.pgm.mspedidos.domain.Pedido;
-import com.dan.pgm.mspedidos.domain.Producto;
+import com.dan.pgm.mspedidos.domain.*;
 import com.dan.pgm.mspedidos.repository.PedidoRepository;
 import com.dan.pgm.mspedidos.services.ClienteService;
 import com.dan.pgm.mspedidos.services.MaterialService;
@@ -89,7 +86,7 @@ class PedidoServiceImplUnitTest {
 //		when(clienteService.deudaCliente(argThat( (Obra o) -> o.getId()>99))).thenReturn(0.0);
 
         Pedido pedidoResultado = pedidoService.crearPedido(unPedido);
-        assertThat(pedidoResultado.getEstado().getId().equals(1));
+        assertThat(pedidoResultado.getEstado().equals(EstadoPedido.ACEPTADO));
         verify(pedidoRepo,times(1)).save(unPedido);
     }
 
@@ -108,7 +105,7 @@ class PedidoServiceImplUnitTest {
 //		when(clienteService.deudaCliente(argThat( (Obra o) -> o.getId()>99))).thenReturn(0.0);
 
         Pedido pedidoResultado = pedidoService.crearPedido(unPedido);
-        assertThat(pedidoResultado.getEstado().getId().equals(2));
+        assertThat(pedidoResultado.getEstado().equals(EstadoPedido.PENDIENTE));
         verify(pedidoRepo,times(1)).save(unPedido);
     }
 
@@ -126,7 +123,7 @@ class PedidoServiceImplUnitTest {
 //		when(clienteService.deudaCliente(argThat( (Obra o) -> o.getId()>99))).thenReturn(0.0);
 
         Pedido pedidoResultado = pedidoService.crearPedido(unPedido);
-        assertThat(pedidoResultado.getEstado().getId().equals(2));
+        assertThat(pedidoResultado.getEstado().equals(EstadoPedido.PENDIENTE));
         verify(pedidoRepo,times(1)).save(unPedido);
 
     }

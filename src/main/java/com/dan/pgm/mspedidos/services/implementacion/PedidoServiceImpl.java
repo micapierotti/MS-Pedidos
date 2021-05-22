@@ -1,8 +1,8 @@
 package com.dan.pgm.mspedidos.services.implementacion;
 
-import com.dan.pgm.mspedidos.dao.PedidoRepository;
+import com.dan.pgm.mspedidos.dao.PedidoRepositoryH2;
+import com.dan.pgm.mspedidos.database.PedidoRepository;
 import com.dan.pgm.mspedidos.domain.*;
-import com.dan.pgm.mspedidos.dtos.ObraDTO;
 import com.dan.pgm.mspedidos.services.ClienteService;
 import com.dan.pgm.mspedidos.services.MaterialService;
 import com.dan.pgm.mspedidos.services.PedidoService;
@@ -27,7 +27,10 @@ public class PedidoServiceImpl implements PedidoService {
     MaterialService materialSrv;
 
     @Autowired
-    PedidoRepository repoPedido;
+    PedidoRepositoryH2 repoPedido;
+
+    @Autowired
+    PedidoRepository pedidoRepository;
 
     @Autowired
     ClienteService clienteSrv;
@@ -35,7 +38,21 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Override
     public Pedido crearPedido(Pedido p) {
-        System.out.println("HOLA PEDIDO "+p);
+        this.pedidoRepository.save(p);
+         return enviarPedidoACorralon(p.getId());
+    }
+    public Pedido enviarPedidoACorralon(Integer pedidoId) {
+        Pedido p = new Pedido();
+        try {
+            if (this.pedidoRepository.findById(pedidoId).isPresent()) {
+                p = this.pedidoRepository.findById(pedidoId).get();
+            } else {
+                throw new RuntimeException("No se halló el pedido con id: "+pedidoId);
+            }
+        } catch(Exception exception) {
+            System.out.println(exception.getMessage());
+        }
+
         boolean hayStock = p.getDetalle()
                 .stream()
                 .allMatch(dp -> verificarStock(dp.getProducto(),dp.getCantidad()));
@@ -45,23 +62,23 @@ public class PedidoServiceImpl implements PedidoService {
                 .mapToDouble( dp -> dp.getCantidad() * dp.getPrecio())
                 .sum();
 
-
+        // TODO IMPLEMENTAR DEUDA CLIENTE
         Double saldoCliente = clienteSrv.deudaCliente(p.getObra());
         Double nuevoSaldo = saldoCliente - totalOrden;
 
         Boolean generaDeuda= nuevoSaldo<0;
         if(hayStock ) {
             if(!generaDeuda || (generaDeuda && this.esDeBajoRiesgo(p.getObra(),nuevoSaldo) ))  {
-                p.setEstado(new EstadoPedido(1,"ACEPTADO"));
+                p.setEstado(EstadoPedido.ACEPTADO);
             } else {
+                p.setEstado(EstadoPedido.RECHAZADO);
                 throw new RuntimeException("No tiene aprobacion crediticia");
             }
         } else {
-            p.setEstado(new EstadoPedido(2,"PENDIENTE"));
+            p.setEstado(EstadoPedido.PENDIENTE);
         }
-        return this.repoPedido.save(p);
+        return this.pedidoRepository.save(p);
     }
-
     @Override
     public Pedido agregarDetallePedido(Integer idPedido, DetallePedido detallePedido) {
         Pedido pedido = repoPedido.findById(idPedido).get();

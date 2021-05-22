@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.IntStream;
 
+import com.dan.pgm.mspedidos.domain.EstadoPedido;
 import com.dan.pgm.mspedidos.services.PedidoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -69,6 +70,15 @@ public class PedidoResource {
         if(unPedido.getDetalle()==null || unPedido.getDetalle().isEmpty() ) {
             return ResponseEntity.badRequest().body("Debe agregar items al pedido");
         }
+        for(DetallePedido dP:unPedido.getDetalle()) {
+            if(dP.getCantidad() <= 0) {
+                return ResponseEntity.badRequest().body("La cantidad en el detalle "+dP.getId()+" debe ser mayor a 0");
+            }
+            if(dP.getProducto() == null) {
+                return ResponseEntity.badRequest().body("El detalle "+dP.getId()+" debe especificar un producto");
+            }
+        }
+        unPedido.setEstado(EstadoPedido.NUEVO);
         pedidoSrv.crearPedido(unPedido);
         return ResponseEntity.status(HttpStatus.CREATED).body("OK");
     }
