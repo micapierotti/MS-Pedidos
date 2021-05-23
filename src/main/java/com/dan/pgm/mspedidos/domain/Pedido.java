@@ -16,8 +16,7 @@ public class Pedido {
 	@OneToMany(targetEntity = DetallePedido.class, cascade = CascadeType.ALL,
 				fetch = FetchType.LAZY, orphanRemoval = true)
 	private List<DetallePedido> detalle;
-	@OneToOne
-	@JoinColumn(name = "ESTADO_ID")
+	@Enumerated(EnumType.STRING)
 	private EstadoPedido estado;
 
 	public Pedido(){};

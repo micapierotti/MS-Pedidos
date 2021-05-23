@@ -50,7 +50,7 @@ public class PedidoResource {
 	
 	private static final String GET_OBRA = "/api/obra/{id}";
 	private static final String REST_API_URL = "http://localhost:8080";
-    private static Integer ID_GEN = 1;
+
 
     //TODO - VER DE MODIFICAR LO Q DEVUELVE CADA MÉTODO SEGUN EL MANEJO EN EL FRONT
 
@@ -59,7 +59,7 @@ public class PedidoResource {
     public ResponseEntity<String> crear(@RequestBody Pedido unPedido){
 
         System.out.println(" crear pedido "+ unPedido);
-        unPedido.setId(ID_GEN++);
+
 
         if(unPedido.getObra()==null) {
             return ResponseEntity.badRequest().body("Debe elegir una obra");
@@ -104,7 +104,8 @@ public class PedidoResource {
     public ResponseEntity<Pedido> actualizar(@RequestBody Pedido nuevo,  @PathVariable Integer idPedido){
         return ResponseEntity.ok(pedidoSrv.actualizarPedido(nuevo, idPedido));
     }
-    
+
+    // TODO corroborar respondeEntity<pedido> con ResponseEntity.ok?
     @DeleteMapping(path = "/{id}")
     @ApiOperation(value = "Borra un pedido por id")
     public ResponseEntity<Pedido> borrar(@PathVariable Integer id){
