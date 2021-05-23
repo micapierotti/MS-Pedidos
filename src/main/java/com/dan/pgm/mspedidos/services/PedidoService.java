@@ -14,8 +14,10 @@ public interface PedidoService {
     public Pedido actualizarPedido(Pedido pedido, Integer idPedido);
     public boolean borrarPedido(Integer id);
     public boolean borrarDetalleDePedido(Integer id, Integer idDetalle);
-    public Optional<Pedido> buscarPedidoPorId(Integer id);
-    public Optional<Pedido> buscarPedidoPorIdObra(Integer id);
+    public Pedido actualizarDetallePedido(List<DetallePedido> detalles, Integer idPedido);
+    public Pedido buscarPedidoPorId(Integer id);
+    public List<Pedido> buscarPedidoPorIdObra(Integer id);
+    public List<Pedido> buscarPedidoPorEstado(String estado);
     public List<Pedido> pedidoPorIdClienteCuit(Integer idCliente, String cuit);
     public DetallePedido buscarDetallePorId(Integer idPedido, Integer idDetalle);
     public boolean verificarExistenciaDePedidos(ArrayList<Integer> idsDeObras);

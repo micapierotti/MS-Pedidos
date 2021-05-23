@@ -79,53 +79,114 @@ public class PedidoServiceImpl implements PedidoService {
         }
         return this.pedidoRepository.save(p);
     }
+
     @Override
     public Pedido agregarDetallePedido(Integer idPedido, DetallePedido detallePedido) {
-        Pedido pedido = repoPedido.findById(idPedido).get();
-        pedido.getDetalle().add(detallePedido);
-        repoPedido.save(pedido);
-        return pedido;
+        Pedido p = buscarPedidoPorId(idPedido);
+        if( p != null){
+            p.getDetalle().add(detallePedido);
+            return pedidoRepository.save(p);
+        } else {
+            return null;
+        }
     }
 
     //TODO validar campos en la UI
     @Override
     public Pedido actualizarPedido(Pedido pedido, Integer idPedido) {
-        repoPedido.save(pedido);
-        return pedido;
+        return pedidoRepository.save(pedido);
     }
 
     @Override
-    public boolean borrarPedido(Integer id) {
-        Pedido pedido = repoPedido.findById(id).get();
-        repoPedido.delete(pedido);
-        if (repoPedido.findByObraId(id).isPresent()) {
-            return false;
-        }
-        return true;
-    }
+    public boolean borrarPedido(Integer idPedido) {
+        Pedido p = buscarPedidoPorId(idPedido);
+        if( p != null){
+            pedidoRepository.delete(p);
 
-    @Override
-    public boolean borrarDetalleDePedido(Integer id, Integer idDetalle) {
-        Pedido pedido = repoPedido.findById(id).get();
-        List<DetallePedido> nuevosDetalles = pedido.getDetalle().stream().filter(detalle -> detalle.getId() != idDetalle).collect(Collectors.toList());
-        pedido.setDetalle(nuevosDetalles);
-        repoPedido.save(pedido);
-        DetallePedido detPedido = buscarDetallePorId(id, idDetalle);
-        if(detPedido != null) {
+            if (pedidoRepository.findById(idPedido).isPresent()) {
+                return false;
+            } else {
+                return true;
+            }
+        } else {
             return false;
         }
 
-        return true;
+
     }
 
     @Override
-    public Optional<Pedido> buscarPedidoPorId(Integer id) {
-        return repoPedido.findById(id);
+    public boolean borrarDetalleDePedido(Integer idPedido, Integer idDetalle) {
+        Pedido p = buscarPedidoPorId(idPedido);
+        if( p != null){
+            List<DetallePedido> nuevosDetalles = p.getDetalle().stream().filter(detalle -> detalle.getId() != idDetalle).collect(Collectors.toList());
+            p.setDetalle(nuevosDetalles);
+            pedidoRepository.save(p);
+
+            DetallePedido detPedido = buscarDetallePorId(idPedido, idDetalle);
+            if(detPedido != null) {
+                return false;
+            }
+            return true;
+        } else {
+            return false;
+        }
+
+    }
+    //TODO validar campos en la UI
+    @Override
+    public Pedido actualizarDetallePedido(List<DetallePedido> detalles, Integer idPedido) {
+        Pedido p = buscarPedidoPorId(idPedido);
+        if(p != null){
+            p.setDetalle(detalles);
+            return pedidoRepository.save(p);
+        } else {
+            return null;
+        }
+
     }
 
     @Override
-    public Optional<Pedido> buscarPedidoPorIdObra(Integer id) {
-        return repoPedido.findByObraId(id);
+    public Pedido buscarPedidoPorId(Integer idPedido) {
+        try{
+            if (pedidoRepository.findById(idPedido).isPresent()) {
+                return pedidoRepository.findById(idPedido).get();
+            } else {
+            throw new RuntimeException("No se halló el pedido con id: " + idPedido);
+            }
+        } catch ( Exception exception){
+            System.out.println(exception.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public List<Pedido> buscarPedidoPorIdObra(Integer idObra) {
+        try{
+            if(pedidoRepository.findByObraId(idObra).isPresent()){
+                return pedidoRepository.findByObraId(idObra).get();
+            } else {
+                throw new RuntimeException("No se halló el pedido con idObra " + idObra);
+            }
+        } catch ( Exception exception){
+            System.out.println(exception.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public List<Pedido> buscarPedidoPorEstado(String estado) {
+       List<Pedido> pedidos = pedidoRepository.findByEstado(estado);
+        try{
+            if(pedidos.size() > 0){
+                return pedidos;
+            } else {
+                throw new RuntimeException("No se encuentran pedidos en el estado: " + estado);
+            }
+        } catch ( Exception exception){
+            System.out.println(exception.getMessage());
+            return null;
+        }
     }
 
     @Override
@@ -140,24 +201,30 @@ public class PedidoServiceImpl implements PedidoService {
         }
         List<Integer> listaIdsObras = getIdsObras(finalURL);
 
-        listaIdsObras.forEach( id -> pedidosFiltrados.add(buscarPedidoPorIdObra(id).get()));
+        listaIdsObras.forEach( id -> pedidosFiltrados.addAll(buscarPedidoPorIdObra(id)));
 
         return pedidosFiltrados;
     }
 
-    //TODO REPOSITORIO DE DETALLE PEDIDO
+
     @Override
     public DetallePedido buscarDetallePorId(Integer idPedido, Integer idDetalle) {
-        Pedido pedido = repoPedido.findById(idPedido).get();
-        DetallePedido detalle = pedido.getDetalle().stream().filter(det -> det.getId() == idDetalle).findFirst().get();
-        return detalle;
+        Pedido pedido = buscarPedidoPorId(idPedido);
+        if(pedido != null){
+            DetallePedido detalle = pedido.getDetalle().stream().filter(det -> det.getId() == idDetalle).findFirst().get();
+            return detalle;
+        }else{
+            return null;
+        }
     }
+
+
 
 
     @Override
     public boolean verificarExistenciaDePedidos(ArrayList<Integer> idsDeObras) {
         List<Pedido> pedidosFiltrados = new ArrayList<>();
-        idsDeObras.forEach( id -> pedidosFiltrados.add(buscarPedidoPorIdObra(id).get()));
+        idsDeObras.forEach( id -> pedidosFiltrados.addAll(buscarPedidoPorIdObra(id)));
 
         if(pedidosFiltrados.size() > 0) {
             return true;
