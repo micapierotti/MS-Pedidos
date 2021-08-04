@@ -12,6 +12,7 @@ public interface PedidoService {
     public Pedido crearPedido(Pedido p);
     public Pedido agregarDetallePedido(Integer idPedido, DetallePedido detallePedido);
     public Pedido actualizarPedido(Pedido pedido, Integer idPedido);
+    public String actualizarEstado(Integer idPedido,String estado);
     public boolean borrarPedido(Integer id);
     public boolean borrarDetalleDePedido(Integer id, Integer idDetalle);
     public Pedido actualizarDetallePedido(List<DetallePedido> detalles, Integer idPedido);

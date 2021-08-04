@@ -92,6 +92,17 @@ public class PedidoResource {
 
     }
 
+    @PutMapping("/modificarEstado/{idPedido}")
+    public ResponseEntity<?> actualizarEstado( @PathVariable Integer idPedido,@RequestParam String estado){
+        try{
+            return new ResponseEntity<String>(pedidoSrv.actualizarEstado(idPedido, estado), HttpStatus.OK);
+        }catch(Exception e){
+            return (ResponseEntity<?>) ResponseEntity.badRequest();
+        }
+
+    }
+
+
     //TODO VER CON UI
     @PutMapping(path = "/{idPedido}")
     @ApiOperation(value = "Actualiza un pedido")

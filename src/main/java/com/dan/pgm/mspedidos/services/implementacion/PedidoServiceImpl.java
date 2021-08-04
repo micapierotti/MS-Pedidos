@@ -13,6 +13,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -21,7 +22,9 @@ public class PedidoServiceImpl implements PedidoService {
 
     private static final String GET_OBRA = "/{id}";
     private static final String GET_IDS_OBRAS = "/by-idcliente-cuit";
-    private static final String REST_API_URL = "http://localhost:8080/api/obra";
+    private static final String REST_API_OBRA_URL = "http://localhost:8080/api/obra";
+    private static final String GET_STOCK_PRODUCTO = "/verificar-stock";
+    private static final String REST_API_PRODUCTO_URL = "http://localhost:9001/api/producto";
 
     @Autowired
     MaterialService materialSrv;
@@ -41,6 +44,7 @@ public class PedidoServiceImpl implements PedidoService {
         this.pedidoRepository.save(p);
          return enviarPedidoACorralon(p.getId());
     }
+
     public Pedido enviarPedidoACorralon(Integer pedidoId) {
         Pedido p = new Pedido();
         try {
@@ -96,6 +100,55 @@ public class PedidoServiceImpl implements PedidoService {
     public Pedido actualizarPedido(Pedido pedido, Integer idPedido) {
         return pedidoRepository.save(pedido);
     }
+
+    public String actualizarEstado(Integer idPedido, String estado){
+        Pedido pedido = this.buscarPedidoPorId(idPedido);
+        if(pedido!=null){
+            if(estado.toUpperCase(Locale.ROOT).equals("CONFIRMADO")){
+                Double sumaPrecio = 0.0;
+
+                for(DetallePedido dp: pedido.getDetalle()){
+
+                    String url = REST_API_PRODUCTO_URL + GET_STOCK_PRODUCTO + "/"+dp.getProducto().getId();
+                    WebClient client = WebClient.create(url);
+
+                    Boolean hayStock = client.get()
+                            .uri(url).accept(MediaType.APPLICATION_JSON)
+                            .retrieve()
+                            .bodyToMono(Boolean.class)
+                            .block();
+
+                    //Sumar precio de cada DetallePedido
+                    sumaPrecio+= dp.getPrecio();
+
+                    if(!hayStock){
+                        pedido.setEstado(EstadoPedido.PENDIENTE);
+                        repoPedido.save(pedido);
+                        return "Estado final: PENDIENTE";
+                    }else{
+
+                        //TODO SEGUIR
+                        return "SEGUIR";
+                    }
+
+                }
+            }
+        }else{
+            throw new RuntimeException("El pedido con id: " + idPedido + " No fue encontrado");
+        }
+        return "SEGUIR"; //TODO SEGUIR
+    }
+
+    //TODO HACER CUANDO ESTE EL MICROSERVICIO CUENTACORRIENTE
+    /*
+    b) El pedido no genera saldo deudor
+    c) Si el pedido genera saldo deudor se verifica que se cumpla que
+        i. Que el saldo deudor sea menor que el descubierto
+        ii. Que la situación crediticia en BCRA sea de bajo riesgo.
+    d) Si se cumple la condición a y al menos una de las condiciones b o c el pedido es cargado como ACEPTADO
+    e) Si no se cumple “a” es cargado como PENDIENTE.
+    f) Si no se cumple b ni c, se rechaza el pedido y se lanza una excepción
+     */
 
     @Override
     public boolean borrarPedido(Integer idPedido) {
@@ -246,7 +299,7 @@ public class PedidoServiceImpl implements PedidoService {
     }
 
     public List<Integer> getIdsObras(String finalURL) {
-        String url = REST_API_URL + GET_IDS_OBRAS + finalURL;
+        String url = REST_API_OBRA_URL + GET_IDS_OBRAS + finalURL;
         WebClient client = WebClient.create(url);
 
         return client.get()
