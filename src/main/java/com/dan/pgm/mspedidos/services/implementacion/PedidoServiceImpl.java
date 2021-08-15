@@ -3,11 +3,15 @@ package com.dan.pgm.mspedidos.services.implementacion;
 import com.dan.pgm.mspedidos.dao.PedidoRepositoryH2;
 import com.dan.pgm.mspedidos.database.PedidoRepository;
 import com.dan.pgm.mspedidos.domain.*;
+import com.dan.pgm.mspedidos.dtos.DetallePedidoDTO;
+import com.dan.pgm.mspedidos.dtos.PedidoDTO;
 import com.dan.pgm.mspedidos.services.ClienteService;
 import com.dan.pgm.mspedidos.services.MaterialService;
 import com.dan.pgm.mspedidos.services.PedidoService;
+import org.apache.commons.collections.ArrayStack;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -37,6 +41,9 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Autowired
     ClienteService clienteSrv;
+
+    @Autowired
+    JmsTemplate jms;
 
 
     @Override
@@ -71,9 +78,21 @@ public class PedidoServiceImpl implements PedidoService {
         Double nuevoSaldo = saldoCliente - totalOrden;
 
         Boolean generaDeuda= nuevoSaldo<0;
-        if(hayStock ) {
+        if(hayStock) {
             if(!generaDeuda || (generaDeuda && this.esDeBajoRiesgo(p.getObra(),nuevoSaldo) ))  {
                 p.setEstado(EstadoPedido.ACEPTADO);
+                PedidoDTO pedidoAEnviar = new PedidoDTO();
+                pedidoAEnviar.setId(p.getId());
+                List<DetallePedidoDTO> detallePedidoAEnviar = new ArrayList<DetallePedidoDTO>();
+                p.getDetalle().stream().forEach(detalle -> {
+                    DetallePedidoDTO detalleDTO = new DetallePedidoDTO();
+                    detalleDTO.setCantidad(detalle.getCantidad());
+                    detalleDTO.setPrecio(detalle.getPrecio());
+                    detalleDTO.setProductoId(detalle.getProducto().getId().toString());
+                    detallePedidoAEnviar.add(detalleDTO);
+                });
+                pedidoAEnviar.setDetalle(detallePedidoAEnviar);
+                jms.convertAndSend("COLA_PEDIDOS", "PedidoDTO:" + pedidoAEnviar);
             } else {
                 p.setEstado(EstadoPedido.RECHAZADO);
                 throw new RuntimeException("No tiene aprobacion crediticia");
