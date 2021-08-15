@@ -1,11 +1,12 @@
 package com.dan.pgm.mspedidos.domain;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.List;
 
 @Entity
-public class Pedido {
+public class Pedido implements Serializable {
 
 	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
