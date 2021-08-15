@@ -71,7 +71,7 @@ class PedidoServiceImplUnitTest {
         unPedido2.setObra(obra2);
     }
 
-    @Test
+   /* @Test
     void testCrearPedidoConStockSinDeuda() {
 //		when(materialService.stockDisponible(p1)).thenReturn(29);
         when(materialService.stockDisponible(any(Producto.class))).thenReturn(20);
@@ -168,7 +168,7 @@ class PedidoServiceImplUnitTest {
 			              () -> pedidoService.crearPedido(unPedido2)
 			);
 			assertEquals("No tiene aprobacion crediticia", exception.getMessage());
-    }
+    }*/
 
     public void hacerAlgo() {
         System.out.println("hace algo");
