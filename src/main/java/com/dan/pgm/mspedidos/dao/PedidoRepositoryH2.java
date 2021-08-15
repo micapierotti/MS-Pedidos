@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 import java.util.Optional;
 
-public interface PedidoRepository extends JpaRepository<Pedido, Integer> {
+public interface PedidoRepositoryH2 extends JpaRepository<Pedido, Integer> {
 
     Optional<Pedido> findByObraId(Integer id);
 }

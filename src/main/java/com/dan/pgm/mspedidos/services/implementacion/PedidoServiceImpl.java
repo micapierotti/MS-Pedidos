@@ -1,8 +1,8 @@
 package com.dan.pgm.mspedidos.services.implementacion;
 
-import com.dan.pgm.mspedidos.dao.PedidoRepository;
+import com.dan.pgm.mspedidos.dao.PedidoRepositoryH2;
+import com.dan.pgm.mspedidos.database.PedidoRepository;
 import com.dan.pgm.mspedidos.domain.*;
-import com.dan.pgm.mspedidos.dtos.ObraDTO;
 import com.dan.pgm.mspedidos.services.ClienteService;
 import com.dan.pgm.mspedidos.services.MaterialService;
 import com.dan.pgm.mspedidos.services.PedidoService;
@@ -13,6 +13,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -21,13 +22,18 @@ public class PedidoServiceImpl implements PedidoService {
 
     private static final String GET_OBRA = "/{id}";
     private static final String GET_IDS_OBRAS = "/by-idcliente-cuit";
-    private static final String REST_API_URL = "http://localhost:8080/api/obra";
+    private static final String REST_API_OBRA_URL = "http://localhost:8080/api/obra";
+    private static final String GET_STOCK_PRODUCTO = "/verificar-stock";
+    private static final String REST_API_PRODUCTO_URL = "http://localhost:9001/api/producto";
 
     @Autowired
     MaterialService materialSrv;
 
     @Autowired
-    PedidoRepository repoPedido;
+    PedidoRepositoryH2 repoPedido;
+
+    @Autowired
+    PedidoRepository pedidoRepository;
 
     @Autowired
     ClienteService clienteSrv;
@@ -35,7 +41,22 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Override
     public Pedido crearPedido(Pedido p) {
-        System.out.println("HOLA PEDIDO "+p);
+        this.pedidoRepository.save(p);
+         return enviarPedidoACorralon(p.getId());
+    }
+
+    public Pedido enviarPedidoACorralon(Integer pedidoId) {
+        Pedido p = new Pedido();
+        try {
+            if (this.pedidoRepository.findById(pedidoId).isPresent()) {
+                p = this.pedidoRepository.findById(pedidoId).get();
+            } else {
+                throw new RuntimeException("No se halló el pedido con id: "+pedidoId);
+            }
+        } catch(Exception exception) {
+            System.out.println(exception.getMessage());
+        }
+
         boolean hayStock = p.getDetalle()
                 .stream()
                 .allMatch(dp -> verificarStock(dp.getProducto(),dp.getCantidad()));
@@ -45,70 +66,180 @@ public class PedidoServiceImpl implements PedidoService {
                 .mapToDouble( dp -> dp.getCantidad() * dp.getPrecio())
                 .sum();
 
-
+        // TODO IMPLEMENTAR DEUDA CLIENTE
         Double saldoCliente = clienteSrv.deudaCliente(p.getObra());
         Double nuevoSaldo = saldoCliente - totalOrden;
 
         Boolean generaDeuda= nuevoSaldo<0;
         if(hayStock ) {
             if(!generaDeuda || (generaDeuda && this.esDeBajoRiesgo(p.getObra(),nuevoSaldo) ))  {
-                p.setEstado(new EstadoPedido(1,"ACEPTADO"));
+                p.setEstado(EstadoPedido.ACEPTADO);
             } else {
+                p.setEstado(EstadoPedido.RECHAZADO);
                 throw new RuntimeException("No tiene aprobacion crediticia");
             }
         } else {
-            p.setEstado(new EstadoPedido(2,"PENDIENTE"));
+            p.setEstado(EstadoPedido.PENDIENTE);
         }
-        return this.repoPedido.save(p);
+        return this.pedidoRepository.save(p);
     }
 
     @Override
     public Pedido agregarDetallePedido(Integer idPedido, DetallePedido detallePedido) {
-        Pedido pedido = repoPedido.findById(idPedido).get();
-        pedido.getDetalle().add(detallePedido);
-        repoPedido.save(pedido);
-        return pedido;
+        Pedido p = buscarPedidoPorId(idPedido);
+        if( p != null){
+            p.getDetalle().add(detallePedido);
+            return pedidoRepository.save(p);
+        } else {
+            return null;
+        }
     }
 
     //TODO validar campos en la UI
     @Override
     public Pedido actualizarPedido(Pedido pedido, Integer idPedido) {
-        repoPedido.save(pedido);
-        return pedido;
+        return pedidoRepository.save(pedido);
     }
 
+    public String actualizarEstado(Integer idPedido, String estado){
+        Pedido pedido = this.buscarPedidoPorId(idPedido);
+        if(pedido!=null){
+            if(estado.toUpperCase(Locale.ROOT).equals("CONFIRMADO")){
+                Double sumaPrecio = 0.0;
+
+                for(DetallePedido dp: pedido.getDetalle()){
+
+                    String url = REST_API_PRODUCTO_URL + GET_STOCK_PRODUCTO + "/"+dp.getProducto().getId();
+                    WebClient client = WebClient.create(url);
+
+                    Boolean hayStock = client.get()
+                            .uri(url).accept(MediaType.APPLICATION_JSON)
+                            .retrieve()
+                            .bodyToMono(Boolean.class)
+                            .block();
+
+                    //Sumar precio de cada DetallePedido
+                    sumaPrecio+= dp.getPrecio();
+
+                    if(!hayStock){
+                        pedido.setEstado(EstadoPedido.PENDIENTE);
+                        repoPedido.save(pedido);
+                        return "Estado final: PENDIENTE";
+                    }else{
+
+                        //TODO SEGUIR
+                        return "SEGUIR";
+                    }
+
+                }
+            }
+        }else{
+            throw new RuntimeException("El pedido con id: " + idPedido + " No fue encontrado");
+        }
+        return "SEGUIR"; //TODO SEGUIR
+    }
+
+    //TODO HACER CUANDO ESTE EL MICROSERVICIO CUENTACORRIENTE
+    /*
+    b) El pedido no genera saldo deudor
+    c) Si el pedido genera saldo deudor se verifica que se cumpla que
+        i. Que el saldo deudor sea menor que el descubierto
+        ii. Que la situación crediticia en BCRA sea de bajo riesgo.
+    d) Si se cumple la condición a y al menos una de las condiciones b o c el pedido es cargado como ACEPTADO
+    e) Si no se cumple “a” es cargado como PENDIENTE.
+    f) Si no se cumple b ni c, se rechaza el pedido y se lanza una excepción
+     */
+
     @Override
-    public boolean borrarPedido(Integer id) {
-        Pedido pedido = repoPedido.findById(id).get();
-        repoPedido.delete(pedido);
-        if (repoPedido.findByObraId(id).isPresent()) {
+    public boolean borrarPedido(Integer idPedido) {
+        Pedido p = buscarPedidoPorId(idPedido);
+        if( p != null){
+            pedidoRepository.delete(p);
+
+            if (pedidoRepository.findById(idPedido).isPresent()) {
+                return false;
+            } else {
+                return true;
+            }
+        } else {
             return false;
         }
-        return true;
+
+
     }
 
     @Override
-    public boolean borrarDetalleDePedido(Integer id, Integer idDetalle) {
-        Pedido pedido = repoPedido.findById(id).get();
-        List<DetallePedido> nuevosDetalles = pedido.getDetalle().stream().filter(detalle -> detalle.getId() != idDetalle).collect(Collectors.toList());
-        pedido.setDetalle(nuevosDetalles);
-        repoPedido.save(pedido);
-        DetallePedido detPedido = buscarDetallePorId(id, idDetalle);
-        if(detPedido != null) {
+    public boolean borrarDetalleDePedido(Integer idPedido, Integer idDetalle) {
+        Pedido p = buscarPedidoPorId(idPedido);
+        if( p != null){
+            List<DetallePedido> nuevosDetalles = p.getDetalle().stream().filter(detalle -> detalle.getId() != idDetalle).collect(Collectors.toList());
+            p.setDetalle(nuevosDetalles);
+            pedidoRepository.save(p);
+
+            DetallePedido detPedido = buscarDetallePorId(idPedido, idDetalle);
+            if(detPedido != null) {
+                return false;
+            }
+            return true;
+        } else {
             return false;
         }
 
-        return true;
+    }
+    //TODO validar campos en la UI
+    @Override
+    public Pedido actualizarDetallePedido(List<DetallePedido> detalles, Integer idPedido) {
+        Pedido p = buscarPedidoPorId(idPedido);
+        if(p != null){
+            p.setDetalle(detalles);
+            return pedidoRepository.save(p);
+        } else {
+            return null;
+        }
+
     }
 
     @Override
-    public Optional<Pedido> buscarPedidoPorId(Integer id) {
-        return repoPedido.findById(id);
+    public Pedido buscarPedidoPorId(Integer idPedido) {
+        try{
+            if (pedidoRepository.findById(idPedido).isPresent()) {
+                return pedidoRepository.findById(idPedido).get();
+            } else {
+            throw new RuntimeException("No se halló el pedido con id: " + idPedido);
+            }
+        } catch ( Exception exception){
+            System.out.println(exception.getMessage());
+            return null;
+        }
     }
 
     @Override
-    public Optional<Pedido> buscarPedidoPorIdObra(Integer id) {
-        return repoPedido.findByObraId(id);
+    public List<Pedido> buscarPedidoPorIdObra(Integer idObra) {
+        try{
+            if(pedidoRepository.findByObraId(idObra).isPresent()){
+                return pedidoRepository.findByObraId(idObra).get();
+            } else {
+                throw new RuntimeException("No se halló el pedido con idObra " + idObra);
+            }
+        } catch ( Exception exception){
+            System.out.println(exception.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public List<Pedido> buscarPedidoPorEstado(String estado) {
+       List<Pedido> pedidos = pedidoRepository.findByEstado(estado);
+        try{
+            if(pedidos.size() > 0){
+                return pedidos;
+            } else {
+                throw new RuntimeException("No se encuentran pedidos en el estado: " + estado);
+            }
+        } catch ( Exception exception){
+            System.out.println(exception.getMessage());
+            return null;
+        }
     }
 
     @Override
@@ -123,24 +254,30 @@ public class PedidoServiceImpl implements PedidoService {
         }
         List<Integer> listaIdsObras = getIdsObras(finalURL);
 
-        listaIdsObras.forEach( id -> pedidosFiltrados.add(buscarPedidoPorIdObra(id).get()));
+        listaIdsObras.forEach( id -> pedidosFiltrados.addAll(buscarPedidoPorIdObra(id)));
 
         return pedidosFiltrados;
     }
 
-    //TODO REPOSITORIO DE DETALLE PEDIDO
+
     @Override
     public DetallePedido buscarDetallePorId(Integer idPedido, Integer idDetalle) {
-        Pedido pedido = repoPedido.findById(idPedido).get();
-        DetallePedido detalle = pedido.getDetalle().stream().filter(det -> det.getId() == idDetalle).findFirst().get();
-        return detalle;
+        Pedido pedido = buscarPedidoPorId(idPedido);
+        if(pedido != null){
+            DetallePedido detalle = pedido.getDetalle().stream().filter(det -> det.getId() == idDetalle).findFirst().get();
+            return detalle;
+        }else{
+            return null;
+        }
     }
+
+
 
 
     @Override
     public boolean verificarExistenciaDePedidos(ArrayList<Integer> idsDeObras) {
         List<Pedido> pedidosFiltrados = new ArrayList<>();
-        idsDeObras.forEach( id -> pedidosFiltrados.add(buscarPedidoPorIdObra(id).get()));
+        idsDeObras.forEach( id -> pedidosFiltrados.addAll(buscarPedidoPorIdObra(id)));
 
         if(pedidosFiltrados.size() > 0) {
             return true;
@@ -162,7 +299,7 @@ public class PedidoServiceImpl implements PedidoService {
     }
 
     public List<Integer> getIdsObras(String finalURL) {
-        String url = REST_API_URL + GET_IDS_OBRAS + finalURL;
+        String url = REST_API_OBRA_URL + GET_IDS_OBRAS + finalURL;
         WebClient client = WebClient.create(url);
 
         return client.get()
