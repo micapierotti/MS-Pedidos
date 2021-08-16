@@ -18,7 +18,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,7 +25,7 @@ public class PedidoServiceImpl implements PedidoService {
 
     private static final String GET_OBRA = "/{id}";
     private static final String GET_IDS_OBRAS = "/by-idcliente-cuit";
-    private static final String REST_API_OBRA_URL = "http://localhost:8080/api/obra";
+    private static final String REST_API_OBRA_URL = "http://localhost:9000/api/obra";
     private static final String GET_STOCK_PRODUCTO = "/verificar-stock";
     private static final String REST_API_PRODUCTO_URL = "http://localhost:9001/api/producto";
 

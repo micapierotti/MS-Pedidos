@@ -51,6 +51,4 @@ public class Pedido implements Serializable {
 	public void setEstado(EstadoPedido estado) {
 		this.estado = estado;
 	}
-	
-	
 }
