@@ -87,7 +87,7 @@ public class PedidoServiceImpl implements PedidoService {
                     DetallePedidoDTO detalleDTO = new DetallePedidoDTO();
                     detalleDTO.setCantidad(detalle.getCantidad());
                     detalleDTO.setPrecio(detalle.getPrecio());
-                    detalleDTO.setProductoId(detalle.getProducto().getId().toString());
+                    detalleDTO.setProductoId(detalle.getProducto().getId());
                     detallePedidoAEnviar.add(detalleDTO);
                 });
                 pedidoAEnviar.setDetalle(detallePedidoAEnviar);
@@ -304,6 +304,30 @@ public class PedidoServiceImpl implements PedidoService {
         return false;
     }
 
+    /////PARA MICROSERVICIO CUENTA CORRIENTE
+    @Override
+    public List<PedidoDTO> facturasPorClienteId(Integer idCliente) {
+        List<Pedido> facturasPorCliente = new ArrayList<>();
+        List<PedidoDTO> facturasPorClienteDTO = new ArrayList<>();
+        String finalURL = "?idCliente=" + idCliente;
+
+        List<Integer> listaIdsObras = getIdsObras(finalURL);
+
+        listaIdsObras.forEach( id -> facturasPorCliente.addAll(buscarPedidoPorIdObra(id)));
+
+
+        facturasPorClienteDTO = facturasPorCliente.stream()
+                    .map(f -> new PedidoDTO(f.getId(),
+                            f.getDetalle().stream()
+                                    .map( dp -> new DetallePedidoDTO(dp.getId(), dp.getCantidad(), dp.getPrecio()))
+                                    .collect(Collectors.toList())))
+                            .collect(Collectors.toList());
+
+        return facturasPorClienteDTO;
+    }
+
+
+
 
     public boolean verificarStock(Producto p, Integer cantidad) {
 
@@ -327,5 +351,6 @@ public class PedidoServiceImpl implements PedidoService {
                 .collectList()
                 .block();
     }
+
 
 }

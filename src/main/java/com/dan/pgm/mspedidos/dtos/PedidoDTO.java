@@ -23,4 +23,9 @@ public class PedidoDTO {
         this.detalle = detalle;
     }
 
+    public PedidoDTO(Integer id, List<DetallePedidoDTO> detalle) {
+        this.id = id;
+        this.detalle = detalle;
+    }
+    public PedidoDTO(){ }
 }

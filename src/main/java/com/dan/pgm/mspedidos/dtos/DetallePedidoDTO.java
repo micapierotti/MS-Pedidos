@@ -2,15 +2,15 @@ package com.dan.pgm.mspedidos.dtos;
 
 public class DetallePedidoDTO {
 
-    private String productoId;
+    private Integer productoId;
     private Integer cantidad;
     private Double precio;
 
-    public String getProductoId() {
+    public Integer getProductoId() {
         return productoId;
     }
 
-    public void setProductoId(String productoId) {
+    public void setProductoId(Integer productoId) {
         this.productoId = productoId;
     }
 
@@ -29,4 +29,11 @@ public class DetallePedidoDTO {
     public void setPrecio(Double precio) {
         this.precio = precio;
     }
+
+    public DetallePedidoDTO(Integer productoId, Integer cantidad, Double precio) {
+        this.productoId = productoId;
+        this.cantidad = cantidad;
+        this.precio = precio;
+    }
+    public DetallePedidoDTO() {}
 }

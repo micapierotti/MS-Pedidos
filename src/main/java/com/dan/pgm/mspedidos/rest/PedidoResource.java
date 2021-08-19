@@ -7,6 +7,7 @@ import java.util.OptionalInt;
 import java.util.stream.IntStream;
 
 import com.dan.pgm.mspedidos.domain.EstadoPedido;
+import com.dan.pgm.mspedidos.dtos.PedidoDTO;
 import com.dan.pgm.mspedidos.services.PedidoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -231,6 +232,12 @@ public class PedidoResource {
 		.retrieve()
 		.bodyToMono(ObraDTO.class)
 		.block();
+    }
+
+    ///PARA MICROSERVICIO CUENTA CORRIENTE
+    @GetMapping("/facturasCliente")
+    public ResponseEntity<List<PedidoDTO>> facturasPorCliente(@RequestParam Integer clienteId){
+        return new ResponseEntity<>(pedidoSrv.facturasPorClienteId(clienteId), HttpStatus.OK);
     }
 	
 }
