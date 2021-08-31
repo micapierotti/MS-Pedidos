@@ -5,22 +5,21 @@ import com.dan.pgm.mspedidos.domain.Pedido;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public interface PedidoService {
 
-    public Pedido crearPedido(Pedido p);
-    public Pedido agregarDetallePedido(Integer idPedido, DetallePedido detallePedido);
-    public Pedido actualizarPedido(Pedido pedido, Integer idPedido);
-    public String actualizarEstado(Integer idPedido,String estado);
-    public boolean borrarPedido(Integer id);
-    public boolean borrarDetalleDePedido(Integer id, Integer idDetalle);
-    public Pedido actualizarDetallePedido(List<DetallePedido> detalles, Integer idPedido);
-    public Pedido buscarPedidoPorId(Integer id);
-    public List<Pedido> buscarPedidoPorIdObra(Integer id);
-    public List<Pedido> buscarPedidoPorEstado(String estado);
-    public List<Pedido> pedidoPorIdClienteCuit(Integer idCliente, String cuit);
-    public DetallePedido buscarDetallePorId(Integer idPedido, Integer idDetalle);
-    public boolean verificarExistenciaDePedidos(ArrayList<Integer> idsDeObras);
+    Pedido crearPedido(Pedido p);
+    Pedido agregarDetallePedido(Integer idPedido, DetallePedido detallePedido);
+    Pedido actualizarPedido(Pedido pedido, Integer idPedido);
+    String actualizarEstado(Integer idPedido,String estado);
+    boolean borrarPedido(Integer id);
+    boolean borrarDetalleDePedido(Integer id, Integer idDetalle);
+    Pedido actualizarDetallePedido(List<DetallePedido> detalles, Integer idPedido);
+    Pedido buscarPedidoPorId(Integer id);
+    List<Pedido> buscarPedidoPorIdObra(Integer id);
+    List<Pedido> buscarPedidoPorEstado(String estado);
+    public List<Pedido> pedidoPorIdCliente(Integer idCliente);
+    DetallePedido buscarDetallePorId(Integer idPedido, Integer idDetalle);
+    boolean verificarExistenciaDePedidos(ArrayList<Integer> idsDeObras);
 
 }

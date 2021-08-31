@@ -6,25 +6,20 @@ import javax.persistence.*;
 public class DetallePedido {
 	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
-	@OneToOne
+	@OneToOne(cascade = {CascadeType.ALL})
 	@JoinColumn(name = "PROD_ID")
 	private Producto producto;
 	private Integer cantidad;
 	private Double precio;
 	
 	public DetallePedido(){
-		
 	}
-	
-	
 	public DetallePedido(Producto producto, Integer cantidad, Double precio) {
 		super();
 		this.producto = producto;
 		this.cantidad = cantidad;
 		this.precio = precio;
 	}
-
-
 	public Integer getId() {
 		return id;
 	}

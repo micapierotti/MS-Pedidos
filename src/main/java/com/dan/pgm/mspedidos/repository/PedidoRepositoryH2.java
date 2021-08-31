@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 // TODO - Descomentar
 @Repository
-public class PedidoRepository {//extends InMemoryRepository<Pedido> {
+public class PedidoRepositoryH2 {//extends InMemoryRepository<Pedido> {
 /*
    // @Override
     public Integer getId(Pedido arg0) {

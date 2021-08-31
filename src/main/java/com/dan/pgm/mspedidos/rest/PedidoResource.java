@@ -1,10 +1,8 @@
 package com.dan.pgm.mspedidos.rest;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.stream.IntStream;
 
 import com.dan.pgm.mspedidos.domain.EstadoPedido;
 import com.dan.pgm.mspedidos.services.PedidoService;
@@ -24,18 +22,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.dan.pgm.mspedidos.domain.DetallePedido;
-import com.dan.pgm.mspedidos.domain.Obra;
 import com.dan.pgm.mspedidos.domain.Pedido;
-import com.dan.pgm.mspedidos.dtos.ClienteDTO;
 import com.dan.pgm.mspedidos.dtos.ObraDTO;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import reactor.core.publisher.Mono;
-
-//import dan.tp2021.pedidos.service.PedidoService;
 
 @RestController
 @RequestMapping("/api/pedido")
@@ -54,7 +47,7 @@ public class PedidoResource {
 
     //TODO - VER DE MODIFICAR LO Q DEVUELVE CADA MÉTODO SEGUN EL MANEJO EN EL FRONT
 
-    @PostMapping
+    @PostMapping(path = "/new")
     @ApiOperation(value = "Carga un pedido")
     public ResponseEntity<String> crear(@RequestBody Pedido unPedido){
 
@@ -68,6 +61,9 @@ public class PedidoResource {
             return ResponseEntity.badRequest().body("Debe agregar items al pedido");
         }
         for(DetallePedido dP:unPedido.getDetalle()) {
+            if(dP.getCantidad() == null) {
+                return ResponseEntity.badRequest().body("Por favor, especifique una cantidad para el detalle "+dP.getId());
+            }
             if(dP.getCantidad() <= 0) {
                 return ResponseEntity.badRequest().body("La cantidad en el detalle "+dP.getId()+" debe ser mayor a 0");
             }
@@ -76,11 +72,12 @@ public class PedidoResource {
             }
         }
         unPedido.setEstado(EstadoPedido.NUEVO);
+        unPedido.setFechaPedido(Instant.now());
         pedidoSrv.crearPedido(unPedido);
         return ResponseEntity.status(HttpStatus.CREATED).body("OK");
     }
     
-    @PostMapping(path = "/{idPedido}/detalle")
+    @PostMapping(path = "/detalle/{idPedido}")
     @ApiOperation(value = "Carga un detalle de pedido")
     public ResponseEntity<Pedido> agregarItem(@PathVariable Integer idPedido, @RequestBody DetallePedido nuevo){
         Pedido p = pedidoSrv.agregarDetallePedido(idPedido, nuevo);
@@ -104,7 +101,7 @@ public class PedidoResource {
 
 
     //TODO VER CON UI
-    @PutMapping(path = "/{idPedido}")
+    @PutMapping(path = "/actualizar/{idPedido}")
     @ApiOperation(value = "Actualiza un pedido")
     @ApiResponses(value = {
         @ApiResponse(code = 200, message = "Actualizado correctamente"),
@@ -117,30 +114,30 @@ public class PedidoResource {
     }
 
     // TODO corroborar respondeEntity<pedido> con ResponseEntity.ok?
-    @DeleteMapping(path = "/{id}")
+    @DeleteMapping(path = "/borrar/{id}")
     @ApiOperation(value = "Borra un pedido por id")
-    public ResponseEntity<Pedido> borrar(@PathVariable Integer id){
-
+    public ResponseEntity<String> borrar(@PathVariable Integer id){
         boolean result = pedidoSrv.borrarPedido(id);
         if(result){
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok("Se ha borrado exitosamente el pedido "+id);
         }
         return ResponseEntity.notFound().build();
     }
     
-    @DeleteMapping(path = "/{id}/detalle/{idDetalle}")
+    @DeleteMapping(path = "/borrarDetalle/{id}/detalle/{idDetalle}")
     @ApiOperation(value = "Borra un detalle de pedido por id")
     public ResponseEntity<Pedido> borrarDetalle(@PathVariable Integer id, @PathVariable Integer idDetalle){
 
         boolean result = pedidoSrv.borrarDetalleDePedido(id, idDetalle);
+        Pedido pedido = pedidoSrv.buscarPedidoPorId(id);
         if(result){
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok(pedido);
         }
         return ResponseEntity.notFound().build();
     }
 
     //TODO VER CON UI
-    @PutMapping(path = "/{idPedido}/actualizar-detalle")
+    @PutMapping(path = "/actualizar-detalle/{idPedido}")
     @ApiOperation(value = "Actualiza detalle pedido")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Actualizado correctamente"),
@@ -158,7 +155,7 @@ public class PedidoResource {
 
     }
     
-    @GetMapping(path = "/{id}")
+    @GetMapping(path = "/id/{id}")
     @ApiOperation(value = "Busca un pedido por id")
     public ResponseEntity<Pedido> getPedidoById(@PathVariable Integer id){
     Pedido p = pedidoSrv.buscarPedidoPorId(id);
@@ -191,10 +188,12 @@ public class PedidoResource {
         }
     }
     
-    @GetMapping
-    @ApiOperation(value = "Busca un pedido por id de cliente y/o cuit")
-    public ResponseEntity<List<Pedido>> pedidoPorIdClienteCuit(@RequestParam(name="idCliente", required = false) Integer idCliente, @RequestParam(name="cuit", required = false) String cuit){
-        List<Pedido> pedidos = pedidoSrv.pedidoPorIdClienteCuit(idCliente, cuit);
+    @GetMapping(path = "/buscar")
+    @ApiOperation(value = "Busca un pedido por id de cliente")
+    public ResponseEntity<List<Pedido>> pedidoPorIdCliente(@RequestParam Integer idCliente){
+
+        System.out.println("ID CLIENTE: "+idCliente);
+        List<Pedido> pedidos = pedidoSrv.pedidoPorIdCliente(idCliente);
         if(pedidos.size() > 0){
             return ResponseEntity.ok(pedidos);
         }else{

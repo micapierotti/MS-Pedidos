@@ -8,7 +8,7 @@ import javax.persistence.Id;
 @Entity
 public class Producto {
 
-	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Id //@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 	private String descripcion;
 	private Double precio;

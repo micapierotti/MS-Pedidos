@@ -1,5 +1,6 @@
 package com.dan.pgm.mspedidos.dtos;
 
+import java.util.Date;
 import java.util.List;
 
 public class ClienteDTO {
@@ -11,7 +12,7 @@ public class ClienteDTO {
 	    private Boolean habilitadoOnline;
 	    private UserDTO user;
 	    private List<ObraDTO> obras;
-	    
+		private Date fechaBaja;
 	    public ClienteDTO() {
 	    	
 	    }

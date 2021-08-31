@@ -8,14 +8,14 @@ import java.util.List;
 @Entity
 public class Pedido implements Serializable {
 
-	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Id //@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 	private Instant fechaPedido;
-	@OneToOne
+	@OneToOne(cascade = {CascadeType.ALL})
 	@JoinColumn(name = "OBRA_ID")
 	private Obra obra;
 	@OneToMany(targetEntity = DetallePedido.class, cascade = CascadeType.ALL,
-				fetch = FetchType.LAZY, orphanRemoval = true)
+				fetch = FetchType.LAZY)//, orphanRemoval = true)
 	private List<DetallePedido> detalle;
 	@Enumerated(EnumType.STRING)
 	private EstadoPedido estado;
