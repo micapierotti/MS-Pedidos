@@ -34,28 +34,24 @@ import io.swagger.annotations.ApiResponses;
 @RequestMapping("/api/pedido")
 @Api(value = "PedidoResource", description = "Permite gestionar los pedidos")
 public class PedidoResource {
-	
 
 	@Autowired
     PedidoService pedidoSrv;
-
-	private static final List<Pedido> listaPedidos = new ArrayList<>();
 	
 	private static final String GET_OBRA = "/api/obra/{id}";
 	private static final String REST_API_URL = "http://localhost:8080";
 
-
-    //TODO - VER DE MODIFICAR LO Q DEVUELVE CADA MÉTODO SEGUN EL MANEJO EN EL FRONT
-
     @PostMapping(path = "/new")
     @ApiOperation(value = "Carga un pedido")
     public ResponseEntity<String> crear(@RequestBody Pedido unPedido){
-
-        System.out.println(" crear pedido "+ unPedido);
-
+        System.out.println(" Crear pedido "+ unPedido);
 
         if(unPedido.getObra()==null) {
             return ResponseEntity.badRequest().body("Debe elegir una obra");
+        }
+        if(!pedidoSrv.existeObra(unPedido.getObra().getId())){
+            System.out.println("NO EXISTE LA OBRA "+unPedido.getObra().getId());
+            return ResponseEntity.badRequest().body("No existe la obra de id "+unPedido.getObra().getId()+", solo se pueden crear pedidos de obras que ya existan en la base de datos.");
         }
         if(unPedido.getDetalle()==null || unPedido.getDetalle().isEmpty() ) {
             return ResponseEntity.badRequest().body("Debe agregar items al pedido");
@@ -71,6 +67,7 @@ public class PedidoResource {
                 return ResponseEntity.badRequest().body("El detalle "+dP.getId()+" debe especificar un producto");
             }
         }
+
         unPedido.setEstado(EstadoPedido.NUEVO);
         unPedido.setFechaPedido(Instant.now());
         pedidoSrv.crearPedido(unPedido);
@@ -99,8 +96,6 @@ public class PedidoResource {
 
     }
 
-
-    //TODO VER CON UI
     @PutMapping(path = "/actualizar/{idPedido}")
     @ApiOperation(value = "Actualiza un pedido")
     @ApiResponses(value = {
@@ -113,7 +108,6 @@ public class PedidoResource {
         return ResponseEntity.ok(pedidoSrv.actualizarPedido(nuevo, idPedido));
     }
 
-    // TODO corroborar respondeEntity<pedido> con ResponseEntity.ok?
     @DeleteMapping(path = "/borrar/{id}")
     @ApiOperation(value = "Borra un pedido por id")
     public ResponseEntity<String> borrar(@PathVariable Integer id){
@@ -127,7 +121,6 @@ public class PedidoResource {
     @DeleteMapping(path = "/borrarDetalle/{id}/detalle/{idDetalle}")
     @ApiOperation(value = "Borra un detalle de pedido por id")
     public ResponseEntity<Pedido> borrarDetalle(@PathVariable Integer id, @PathVariable Integer idDetalle){
-
         boolean result = pedidoSrv.borrarDetalleDePedido(id, idDetalle);
         Pedido pedido = pedidoSrv.buscarPedidoPorId(id);
         if(result){
@@ -136,7 +129,6 @@ public class PedidoResource {
         return ResponseEntity.notFound().build();
     }
 
-    //TODO VER CON UI
     @PutMapping(path = "/actualizar-detalle/{idPedido}")
     @ApiOperation(value = "Actualiza detalle pedido")
     @ApiResponses(value = {
@@ -191,7 +183,6 @@ public class PedidoResource {
     @GetMapping(path = "/buscar")
     @ApiOperation(value = "Busca un pedido por id de cliente")
     public ResponseEntity<List<Pedido>> pedidoPorIdCliente(@RequestParam Integer idCliente){
-
         System.out.println("ID CLIENTE: "+idCliente);
         List<Pedido> pedidos = pedidoSrv.pedidoPorIdCliente(idCliente);
         if(pedidos.size() > 0){
@@ -219,9 +210,9 @@ public class PedidoResource {
     public boolean verificarExistenciaDePedidos(@RequestBody ArrayList<Integer> idsDeObras){
         return pedidoSrv.verificarExistenciaDePedidos(idsDeObras);
     }
-    
+
+    //TODO Borrar?
     public ObraDTO getObraPorId(Integer obraPedido) {
-    	
     	String url = REST_API_URL + GET_OBRA;
 		WebClient client = WebClient.create(url);
 		

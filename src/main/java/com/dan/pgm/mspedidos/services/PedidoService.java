@@ -18,8 +18,9 @@ public interface PedidoService {
     Pedido buscarPedidoPorId(Integer id);
     List<Pedido> buscarPedidoPorIdObra(Integer id);
     List<Pedido> buscarPedidoPorEstado(String estado);
-    public List<Pedido> pedidoPorIdCliente(Integer idCliente);
+    List<Pedido> pedidoPorIdCliente(Integer idCliente);
     DetallePedido buscarDetallePorId(Integer idPedido, Integer idDetalle);
     boolean verificarExistenciaDePedidos(ArrayList<Integer> idsDeObras);
+    boolean existeObra(Integer idObra);
 
 }

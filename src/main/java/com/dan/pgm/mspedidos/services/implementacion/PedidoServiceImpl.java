@@ -23,10 +23,9 @@ import java.util.stream.Collectors;
 @Service
 public class PedidoServiceImpl implements PedidoService {
 
-    private static final String GET_OBRA = "/{id}";
-    private static final String REST_API_OBRA_URL = "http://localhost:9000/api/obra";
-    private static final String GET_STOCK_PRODUCTO = "/verificar-stock";
-    private static final String REST_API_PRODUCTO_URL = "http://localhost:9001/api/producto";
+    private static final String REST_API_OBRA_URL = "http://localhost:9000/api/obra/";
+    private static final String GET_STOCK_PRODUCTO = "verificar-stock";
+    private static final String REST_API_PRODUCTO_URL = "http://localhost:9001/api/producto/";
 
     @Autowired
     MaterialService materialSrv;
@@ -110,10 +109,9 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     public Pedido agregarDetallePedido(Integer idPedido, DetallePedido detallePedido) {
         Pedido p = buscarPedidoPorId(idPedido);
-        if( p != null){
+        if(p != null){
             List<DetallePedido> newDetalle = p.getDetalle();
             newDetalle.add(detallePedido);
-
             p.setDetalle(newDetalle);
             return pedidoRepository.save(p);
         } else {
@@ -121,7 +119,6 @@ public class PedidoServiceImpl implements PedidoService {
         }
     }
 
-    //TODO validar campos en la UI
     @Override
     public Pedido actualizarPedido(Pedido pedido, Integer idPedido) {
         return pedidoRepository.save(pedido);
@@ -211,7 +208,6 @@ public class PedidoServiceImpl implements PedidoService {
 
     }
 
-    //TODO validar campos en la UI
     @Override
     public Pedido actualizarDetallePedido(List<DetallePedido> detalles, Integer idPedido) {
         Pedido p = buscarPedidoPorId(idPedido);
@@ -297,7 +293,6 @@ public class PedidoServiceImpl implements PedidoService {
     public boolean verificarExistenciaDePedidos(ArrayList<Integer> idsDeObras) {
         List<Pedido> pedidosFiltrados = new ArrayList<>();
         idsDeObras.forEach( id -> pedidosFiltrados.addAll(buscarPedidoPorIdObra(id)));
-
         return pedidosFiltrados.size() > 0;
     }
 
@@ -326,6 +321,24 @@ public class PedidoServiceImpl implements PedidoService {
         List<Integer> idsObras = new ArrayList<>();
         obrasResult.forEach(obra -> idsObras.add(obra.getId()));
         return idsObras;
+    }
+
+    @Override
+    public boolean existeObra(Integer idObra) {
+        String url = REST_API_OBRA_URL + idObra;
+        WebClient client = WebClient.create(url);
+
+        try{
+            ObraDTO obraResult= client.get()
+                .uri(url).accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(ObraDTO.class)
+                .block();
+
+            return true;
+        } catch (Exception e){
+            return false;
+        }
     }
 
 }
