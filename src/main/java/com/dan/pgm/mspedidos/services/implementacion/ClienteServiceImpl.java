@@ -1,6 +1,5 @@
 package com.dan.pgm.mspedidos.services.implementacion;
 
-import com.dan.pgm.mspedidos.domain.Obra;
 import com.dan.pgm.mspedidos.dtos.ClienteDTO;
 import com.dan.pgm.mspedidos.dtos.ObraDTO;
 import com.dan.pgm.mspedidos.services.ClienteService;
@@ -10,6 +9,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
 public class ClienteServiceImpl implements ClienteService {
+
     private static final String REST_API_OBRA_URL = "http://localhost:9000/api/obra/";
     private static final String REST_API_CLIENTE_URL = "http://localhost:9000/api/cliente/";
     private static final String GET_CLIENTE_BY_ID = "by-id/";
@@ -35,26 +35,20 @@ public class ClienteServiceImpl implements ClienteService {
                     .bodyToMono(ClienteDTO.class)
                     .block();
 
-            if(clientResult!=null){
+
+            if(clientResult!=null)
                 return clientResult.getMaxCuentaCorriente();
-            } else{
+            else
                 throw new RuntimeException("No se encontró el cliente de la obra "+id);
-            }
+
         }else{
             throw new RuntimeException("No se encontró la obra de id "+id);
         }
     }
 
     @Override
-    public Integer situacionCrediticiaBCRA(Obra id) {
-        // TODO Auto-generated method stub
-        return null;
+    public Integer situacionCrediticiaBCRA(Integer idObra) {
+        //Acá se pegaría al endpoint de BCRA, pero queda simuladoe en Tipo 1.
+        return 1;
     }
-
-    @Override
-    public Double maximoSaldoNegativo(Obra id) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
 }

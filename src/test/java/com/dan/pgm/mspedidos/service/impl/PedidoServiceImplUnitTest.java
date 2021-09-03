@@ -1,7 +1,5 @@
 package com.dan.pgm.mspedidos.service.impl;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.dan.pgm.mspedidos.domain.*;
 import com.dan.pgm.mspedidos.repository.PedidoRepositoryH2;
 import com.dan.pgm.mspedidos.services.ClienteService;

@@ -7,20 +7,25 @@ import java.util.List;
 
 @Entity
 public class Pedido implements Serializable {
-
-	@Id //@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Id
 	private Integer id;
 	private Instant fechaPedido;
-	@OneToOne(cascade = {CascadeType.ALL})
-	@JoinColumn(name = "OBRA_ID")
-	private Obra obra;
+	private Integer idObra;
 	@OneToMany(targetEntity = DetallePedido.class, cascade = CascadeType.ALL,
-				fetch = FetchType.LAZY)//, orphanRemoval = true)
+				fetch = FetchType.LAZY)
 	private List<DetallePedido> detalle;
 	@Enumerated(EnumType.STRING)
 	private EstadoPedido estado;
 
-	public Pedido(){};
+	public Pedido() {
+	}
+	public Pedido(Integer id, Instant fechaPedido, Integer idObra, List<DetallePedido> detalle, EstadoPedido estado) {
+		this.id = id;
+		this.fechaPedido = fechaPedido;
+		this.idObra = idObra;
+		this.detalle = detalle;
+		this.estado = estado;
+	}
 	public Integer getId() {
 		return id;
 	}
@@ -33,11 +38,11 @@ public class Pedido implements Serializable {
 	public void setFechaPedido(Instant fechaPedido) {
 		this.fechaPedido = fechaPedido;
 	}
-	public Obra getObra() {
-		return obra;
+	public Integer getIdObra() {
+		return idObra;
 	}
-	public void setObra(Obra obra) {
-		this.obra = obra;
+	public void setIdObra(Integer idObra) {
+		this.idObra = idObra;
 	}
 	public List<DetallePedido> getDetalle() {
 		return detalle;
@@ -51,6 +56,4 @@ public class Pedido implements Serializable {
 	public void setEstado(EstadoPedido estado) {
 		this.estado = estado;
 	}
-	
-	
 }

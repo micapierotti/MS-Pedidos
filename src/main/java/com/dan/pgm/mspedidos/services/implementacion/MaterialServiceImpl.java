@@ -9,6 +9,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
 public class MaterialServiceImpl implements MaterialService {
+
     private static final String REST_API_MATERIAL_URL = "http://localhost:9001/api/productos/";
 
     @Override
@@ -22,11 +23,10 @@ public class MaterialServiceImpl implements MaterialService {
                 .bodyToMono(ProductoDTO.class)
                 .block();
 
-        if(result != null){
+        if(result != null)
             return result.getStockActual()-result.getStockMinimo();
-        }else{
+        else
             throw new RuntimeException("No se pudo obtener el stock disponible: no se encontró el producto de id "+idProducto);
-        }
     }
 
     @Override
@@ -40,7 +40,6 @@ public class MaterialServiceImpl implements MaterialService {
                     .retrieve()
                     .bodyToMono(MaterialDTO.class)
                     .block();
-
             return true;
         } catch (Exception e){
             return false;

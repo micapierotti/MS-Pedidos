@@ -22,5 +22,4 @@ public interface PedidoService {
     DetallePedido buscarDetallePorId(Integer idPedido, Integer idDetalle);
     boolean verificarExistenciaDePedidos(ArrayList<Integer> idsDeObras);
     boolean existeObra(Integer idObra);
-
 }
