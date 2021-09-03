@@ -60,9 +60,11 @@ public class PedidoServiceImpl implements PedidoService {
 
         System.out.println("Pedido encontrado : "+p.getId());
 
-        boolean hayStock = p.getDetalle()
-                .stream()
-                .allMatch(dp -> verificarStock(dp.getIdProducto(),dp.getCantidad()));
+        boolean hayStock = true;
+        for(DetallePedido dp : p.getDetalle()){
+            if(!verificarStock(dp.getIdProducto(), dp.getCantidad()))
+                hayStock = false;
+        }
 
         Double totalOrden = p.getDetalle()
                 .stream()
@@ -134,9 +136,12 @@ public class PedidoServiceImpl implements PedidoService {
 
         if(pedido!=null){
             if(estado.toUpperCase(Locale.ROOT).equals("CONFIRMADO")){
-                boolean hayStock = pedido.getDetalle()
-                        .stream()
-                        .allMatch(dp -> verificarStock(dp.getIdProducto(),dp.getCantidad()));
+
+                boolean hayStock = true;
+                for(DetallePedido dp : pedido.getDetalle()){
+                    if(!verificarStock(dp.getIdProducto(), dp.getCantidad()))
+                        hayStock = false;
+                }
 
                 Double totalOrden = pedido.getDetalle()
                         .stream()
@@ -257,6 +262,7 @@ public class PedidoServiceImpl implements PedidoService {
     public List<Pedido> buscarPedidoPorEstado(String estado) {
 
         EstadoPedido state = EstadoPedido.valueOf(estado.toUpperCase(Locale.ROOT));
+        System.out.println("ESTADO: ... "+state+" - "+estado);
         List<Pedido> pedidos = pedidoRepository.findByEstado(state);
 
         try{
