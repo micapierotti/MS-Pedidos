@@ -193,7 +193,7 @@ public class PedidoResource {
             return ResponseEntity.notFound().build();
     }
 
-    @GetMapping(path = "/existen-pedidos")
+    @PostMapping(path = "/existen-pedidos")
     @ApiOperation(value = "Devuelve si alguna de las obras recibidas tiene un pedido en curso")
     public boolean verificarExistenciaDePedidos(@RequestBody ArrayList<Integer> idsDeObras){
         return pedidoSrv.verificarExistenciaDePedidos(idsDeObras);
