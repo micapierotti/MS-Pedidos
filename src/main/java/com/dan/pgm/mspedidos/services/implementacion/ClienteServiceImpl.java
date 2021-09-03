@@ -11,7 +11,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Service
 public class ClienteServiceImpl implements ClienteService {
     private static final String REST_API_OBRA_URL = "http://localhost:9000/api/obra/";
-    private static final String REST_API_CLIENTE_URL = "http://localhost:9000/api/productos/";
+    private static final String REST_API_CLIENTE_URL = "http://localhost:9000/api/cliente/";
+    private static final String GET_CLIENTE_BY_ID = "by-id/";
 
     @Override
     public Double deudaCliente(Integer id) {
@@ -25,7 +26,7 @@ public class ClienteServiceImpl implements ClienteService {
                 .block();
 
         if(obraResult != null){
-            String clientUrl = REST_API_CLIENTE_URL + obraResult.getCliente().getId();
+            String clientUrl = REST_API_CLIENTE_URL +  GET_CLIENTE_BY_ID + obraResult.getClienteId();
             WebClient client = WebClient.create(clientUrl);
 
             ClienteDTO clientResult = client.get()

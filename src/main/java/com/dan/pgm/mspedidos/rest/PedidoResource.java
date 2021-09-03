@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.dan.pgm.mspedidos.domain.EstadoPedido;
+import com.dan.pgm.mspedidos.services.MaterialService;
 import com.dan.pgm.mspedidos.services.PedidoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -37,6 +38,9 @@ public class PedidoResource {
 
 	@Autowired
     PedidoService pedidoSrv;
+
+    @Autowired
+    MaterialService materialSrv;
 	
 	private static final String GET_OBRA = "/api/obra/{id}";
 	private static final String REST_API_URL = "http://localhost:8080";
@@ -46,26 +50,21 @@ public class PedidoResource {
     public ResponseEntity<String> crear(@RequestBody Pedido unPedido){
         System.out.println(" Crear pedido "+ unPedido);
 
-        if(unPedido.getObra()==null) {
+        if(unPedido.getObra()==null)
             return ResponseEntity.badRequest().body("Debe elegir una obra");
-        }
-        if(!pedidoSrv.existeObra(unPedido.getObra().getId())){
-            System.out.println("NO EXISTE LA OBRA "+unPedido.getObra().getId());
+        if(!pedidoSrv.existeObra(unPedido.getObra().getId()))
             return ResponseEntity.badRequest().body("No existe la obra de id "+unPedido.getObra().getId()+", solo se pueden crear pedidos de obras que ya existan en la base de datos.");
-        }
-        if(unPedido.getDetalle()==null || unPedido.getDetalle().isEmpty() ) {
+        if(unPedido.getDetalle()==null || unPedido.getDetalle().isEmpty() )
             return ResponseEntity.badRequest().body("Debe agregar items al pedido");
-        }
-        for(DetallePedido dP:unPedido.getDetalle()) {
-            if(dP.getCantidad() == null) {
+        for(DetallePedido dP : unPedido.getDetalle()) {
+            if(dP.getCantidad() == null)
                 return ResponseEntity.badRequest().body("Por favor, especifique una cantidad para el detalle "+dP.getId());
-            }
-            if(dP.getCantidad() <= 0) {
+            if(dP.getCantidad() <= 0)
                 return ResponseEntity.badRequest().body("La cantidad en el detalle "+dP.getId()+" debe ser mayor a 0");
-            }
-            if(dP.getProducto() == null) {
+            if(dP.getIdProducto() == null)
                 return ResponseEntity.badRequest().body("El detalle "+dP.getId()+" debe especificar un producto");
-            }
+            if(!materialSrv.existeMaterial(dP.getIdProducto()))
+                return ResponseEntity.badRequest().body("No existe el producto de id "+dP.getIdProducto()+", solo se pueden crear pedidos con productos existentes.");
         }
 
         unPedido.setEstado(EstadoPedido.NUEVO);
@@ -93,7 +92,6 @@ public class PedidoResource {
         }catch(Exception e){
             return (ResponseEntity<?>) ResponseEntity.badRequest();
         }
-
     }
 
     @PutMapping(path = "/actualizar/{idPedido}")
@@ -122,8 +120,8 @@ public class PedidoResource {
     @ApiOperation(value = "Borra un detalle de pedido por id")
     public ResponseEntity<Pedido> borrarDetalle(@PathVariable Integer id, @PathVariable Integer idDetalle){
         boolean result = pedidoSrv.borrarDetalleDePedido(id, idDetalle);
-        Pedido pedido = pedidoSrv.buscarPedidoPorId(id);
         if(result){
+            Pedido pedido = pedidoSrv.buscarPedidoPorId(id);
             return ResponseEntity.ok(pedido);
         }
         return ResponseEntity.notFound().build();

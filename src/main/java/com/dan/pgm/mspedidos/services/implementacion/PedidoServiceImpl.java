@@ -1,6 +1,7 @@
 package com.dan.pgm.mspedidos.services.implementacion;
 
 import com.dan.pgm.mspedidos.dao.PedidoRepositoryH2Dao;
+import com.dan.pgm.mspedidos.database.DetallePedidoRepository;
 import com.dan.pgm.mspedidos.database.PedidoRepository;
 import com.dan.pgm.mspedidos.domain.*;
 import com.dan.pgm.mspedidos.dtos.DetallePedidoDTO;
@@ -37,6 +38,9 @@ public class PedidoServiceImpl implements PedidoService {
     PedidoRepository pedidoRepository;
 
     @Autowired
+    DetallePedidoRepository detallePedidoRepository;
+
+    @Autowired
     ClienteService clienteSrv;
 
     @Autowired
@@ -52,11 +56,9 @@ public class PedidoServiceImpl implements PedidoService {
     public Pedido enviarPedidoACorralon(Integer pedidoId) {
         Pedido p = new Pedido();
         try {
-            if (this.pedidoRepository.findById(pedidoId).isPresent()) {
+            if (this.pedidoRepository.findById(pedidoId).isPresent())
                 p = this.pedidoRepository.findById(pedidoId).get();
-            } else {
-                throw new RuntimeException("No se halló el pedido con id: "+pedidoId);
-            }
+            else throw new RuntimeException("No se halló el pedido con id: "+pedidoId);
         } catch(Exception exception) {
             System.out.println(exception.getMessage());
         }
@@ -66,7 +68,7 @@ public class PedidoServiceImpl implements PedidoService {
 
         boolean hayStock = p.getDetalle()
                 .stream()
-                .allMatch(dp -> verificarStock(dp.getProducto(),dp.getCantidad()));
+                .allMatch(dp -> verificarStock(dp.getIdProducto(),dp.getCantidad()));
 
         Double totalOrden = p.getDetalle()
                 .stream()
@@ -91,7 +93,7 @@ public class PedidoServiceImpl implements PedidoService {
                     DetallePedidoDTO detalleDTO = new DetallePedidoDTO();
                     detalleDTO.setCantidad(detalle.getCantidad());
                     detalleDTO.setPrecio(detalle.getPrecio());
-                    detalleDTO.setProductoId(detalle.getProducto().getId().toString());
+                    detalleDTO.setProductoId(detalle.getIdProducto().toString());
                     detallePedidoAEnviar.add(detalleDTO);
                 });
                 pedidoAEnviar.setDetalle(detallePedidoAEnviar);
@@ -132,7 +134,7 @@ public class PedidoServiceImpl implements PedidoService {
 
                 for(DetallePedido dp: pedido.getDetalle()){
 
-                    String url = REST_API_PRODUCTO_URL + GET_STOCK_PRODUCTO + "/"+dp.getProducto().getId();
+                    String url = REST_API_PRODUCTO_URL + GET_STOCK_PRODUCTO + "/"+dp.getIdProducto();
                     WebClient client = WebClient.create(url);
 
                     Boolean hayStock = client.get()
@@ -176,14 +178,10 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     public boolean borrarPedido(Integer idPedido) {
         Pedido p = buscarPedidoPorId(idPedido);
-        if( p != null){
+        if(p != null){
+            p.getDetalle().forEach(detallePedido -> borrarDetalleDePedido(idPedido, detallePedido.getId()));
             pedidoRepository.delete(p);
-
-            if (pedidoRepository.findById(idPedido).isPresent()) {
-                return false;
-            } else {
-                return true;
-            }
+            return !pedidoRepository.findById(idPedido).isPresent();
         } else {
             return false;
         }
@@ -192,16 +190,15 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     public boolean borrarDetalleDePedido(Integer idPedido, Integer idDetalle) {
         Pedido p = buscarPedidoPorId(idPedido);
-        if( p != null){
+        if(p != null){
             List<DetallePedido> nuevosDetalles = p.getDetalle().stream().filter(detalle -> detalle.getId() != idDetalle).collect(Collectors.toList());
             p.setDetalle(nuevosDetalles);
             pedidoRepository.save(p);
 
-            DetallePedido detPedido = buscarDetallePorId(idPedido, idDetalle);
-            if(detPedido != null) {
-                return false;
+            if(detallePedidoRepository.findById(idDetalle).isPresent()){
+                detallePedidoRepository.delete(detallePedidoRepository.findById(idDetalle).get());
             }
-            return true;
+            return !detallePedidoRepository.findById(idDetalle).isPresent();
         } else {
             return false;
         }
@@ -236,12 +233,10 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     public List<Pedido> buscarPedidoPorIdObra(Integer idObra) {
         try{
-            if(pedidoRepository.findByObraId(idObra).isPresent()){
+            if(pedidoRepository.findByObraId(idObra).isPresent())
                 return pedidoRepository.findByObraId(idObra).get();
-            } else {
-                throw new RuntimeException("No se halló el pedido con idObra " + idObra);
-            }
-        } catch ( Exception exception){
+            else throw new RuntimeException("No se halló el pedido con idObra " + idObra);
+        } catch (Exception exception){
             System.out.println(exception.getMessage());
             return null;
         }
@@ -269,9 +264,29 @@ public class PedidoServiceImpl implements PedidoService {
         String finalURL = "?idCliente=" + idCliente;
 
         List<Integer> listaIdsObras = getIdsObras(finalURL);
-        listaIdsObras.forEach( id -> pedidosFiltrados.addAll(buscarPedidoPorIdObra(id)));
+        listaIdsObras.forEach(id -> pedidosFiltrados.addAll(buscarPedidoPorIdObra(id)));
 
         return pedidosFiltrados;
+    }
+
+    public List<Integer> getIdsObras(String finalURL) {
+        List<Integer> idsObras = new ArrayList<>();
+        String url = REST_API_OBRA_URL + finalURL;
+        WebClient client = WebClient.create(url);
+
+        try{
+            List<ObraDTO> obrasResult= client.get()
+                .uri(url).accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToFlux(ObraDTO.class)
+                .collectList()
+                .block();
+
+            obrasResult.forEach(obra -> idsObras.add(obra.getId()));
+            return idsObras;
+        } catch (Exception e){
+            return idsObras;
+        }
     }
 
 
@@ -279,13 +294,10 @@ public class PedidoServiceImpl implements PedidoService {
     public DetallePedido buscarDetallePorId(Integer idPedido, Integer idDetalle) {
         Pedido pedido = buscarPedidoPorId(idPedido);
         if(pedido != null){
-            if(pedido.getDetalle().stream().filter(det -> det.getId() == idDetalle).findFirst().isPresent()){
-                return pedido.getDetalle().stream().filter(det -> det.getId() == idDetalle).findFirst().get();
-            }
-            return null;
-        }else{
-            return null;
-        }
+            if(pedido.getDetalle().stream().anyMatch(det -> det.getId().equals(idDetalle))){
+                return pedido.getDetalle().stream().filter(det -> det.getId().equals(idDetalle)).findFirst().get();
+            }else return null;
+        }else throw new RuntimeException("No se halló el pedido con id: "+idPedido);
     }
 
 
@@ -297,30 +309,14 @@ public class PedidoServiceImpl implements PedidoService {
     }
 
 
-    public boolean verificarStock(Producto p, Integer cantidad) {
-        return materialSrv.stockDisponible(p)>=cantidad;
+    public boolean verificarStock(Integer idProducto, Integer cantidad) {
+        return materialSrv.stockDisponible(idProducto)>=cantidad;
     }
 
     public boolean esDeBajoRiesgo(Obra o, Double saldoNuevo) {
         Double maximoSaldoNegativo = clienteSrv.maximoSaldoNegativo(o);
         Boolean tieneSaldo = Math.abs(saldoNuevo) < maximoSaldoNegativo;
         return tieneSaldo;
-    }
-
-    public List<Integer> getIdsObras(String finalURL) {
-        String url = REST_API_OBRA_URL + finalURL;
-        WebClient client = WebClient.create(url);
-
-        List<ObraDTO> obrasResult= client.get()
-                .uri(url).accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToFlux(ObraDTO.class)
-                .collectList()
-                .block();
-
-        List<Integer> idsObras = new ArrayList<>();
-        obrasResult.forEach(obra -> idsObras.add(obra.getId()));
-        return idsObras;
     }
 
     @Override
