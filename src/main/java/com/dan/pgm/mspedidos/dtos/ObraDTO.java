@@ -7,33 +7,29 @@ public class ObraDTO {
 	private Float longitud;
 	private String direccion;
 	private Integer superficie;
-	private TipoObraDTO tipo;
-	private ClienteDTO cliente;
-	
-	public ObraDTO() {
-		
-	}
-	
-	public ObraDTO(Integer id, String descripcion, Float latitud, Float longitud, String direccion, Integer superficie,
-			TipoObraDTO tipo, ClienteDTO cliente) {
-		super();
-		this.id = id;
+	private String tipo;
+	private Integer clienteId;
+
+	public ObraDTO(String descripcion, Float latitud, Float longitud, String direccion, Integer superficie, String tipo, Integer clienteId) {
 		this.descripcion = descripcion;
 		this.latitud = latitud;
 		this.longitud = longitud;
 		this.direccion = direccion;
 		this.superficie = superficie;
 		this.tipo = tipo;
-		this.cliente = cliente;
+		this.clienteId = clienteId;
+	}
+	public ObraDTO () {
+
+	}
+	public String getDescripcion() {
+		return descripcion;
 	}
 	public Integer getId() {
 		return id;
 	}
 	public void setId(Integer id) {
 		this.id = id;
-	}
-	public String getDescripcion() {
-		return descripcion;
 	}
 	public void setDescripcion(String descripcion) {
 		this.descripcion = descripcion;
@@ -62,18 +58,16 @@ public class ObraDTO {
 	public void setSuperficie(Integer superficie) {
 		this.superficie = superficie;
 	}
-	public TipoObraDTO getTipo() {
+	public String getTipo() {
 		return tipo;
 	}
-	public void setTipo(TipoObraDTO tipo) {
+	public void setTipo(String tipo) {
 		this.tipo = tipo;
 	}
-	public ClienteDTO getCliente() {
-		return cliente;
+	public Integer getClienteId() {
+		return clienteId;
 	}
-	public void setCliente(ClienteDTO cliente) {
-		this.cliente = cliente;
+	public void setClienteId(Integer clienteId) {
+		this.clienteId = clienteId;
 	}
-	
-	
 }
