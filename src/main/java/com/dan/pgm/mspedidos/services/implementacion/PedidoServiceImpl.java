@@ -3,9 +3,7 @@ package com.dan.pgm.mspedidos.services.implementacion;
 import com.dan.pgm.mspedidos.database.DetallePedidoRepository;
 import com.dan.pgm.mspedidos.database.PedidoRepository;
 import com.dan.pgm.mspedidos.domain.*;
-import com.dan.pgm.mspedidos.dtos.DetallePedidoDTO;
 import com.dan.pgm.mspedidos.dtos.ObraDTO;
-import com.dan.pgm.mspedidos.dtos.PedidoDTO;
 import com.dan.pgm.mspedidos.services.ClienteService;
 import com.dan.pgm.mspedidos.services.MaterialService;
 import com.dan.pgm.mspedidos.services.PedidoService;
@@ -14,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -38,7 +37,6 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Autowired
     JmsTemplate jms;
-
 
     @Override
     public Pedido crearPedido(Pedido p) {
@@ -83,19 +81,13 @@ public class PedidoServiceImpl implements PedidoService {
             if(!generaDeuda || this.esDeBajoRiesgo(p.getIdObra()))  {
                 p.setEstado(EstadoPedido.ACEPTADO);
 
-                PedidoDTO pedidoAEnviar = new PedidoDTO();
-                pedidoAEnviar.setId(p.getId());
+                List<Integer> idsDetalles = new ArrayList<>();
 
-                List<DetallePedidoDTO> detallePedidoAEnviar = new ArrayList<DetallePedidoDTO>();
-                p.getDetalle().stream().forEach(detalle -> {
-                    DetallePedidoDTO detalleDTO = new DetallePedidoDTO();
-                    detalleDTO.setCantidad(detalle.getCantidad());
-                    detalleDTO.setPrecio(detalle.getPrecio());
-                    detalleDTO.setProductoId(detalle.getIdProducto().toString());
-                    detallePedidoAEnviar.add(detalleDTO);
-                });
-                pedidoAEnviar.setDetalle(detallePedidoAEnviar);
-                jms.convertAndSend("COLA_PEDIDOS", "PedidoDTO:" + pedidoAEnviar);
+                for(DetallePedido det : p.getDetalle())
+                    idsDetalles.add(det.getId());
+
+                System.out.println("Ids a enviar: "+idsDetalles);
+                jms.convertAndSend("COLA_PEDIDOS", idsDetalles);
             } else {
                 p.setEstado(EstadoPedido.RECHAZADO);
                 throw new RuntimeException("No tiene aprobación crediticia: el pedido genera saldo deudor mayor al descubierto y la situación crediticia en BCRA no es de bajo riesgo.");
@@ -326,6 +318,14 @@ public class PedidoServiceImpl implements PedidoService {
 
         }else
             throw new RuntimeException("No se halló el pedido con id: "+idPedido);
+    }
+
+    @Override
+    public DetallePedido buscarDetallePorSuId(Integer idDetalle) {
+        if( detallePedidoRepository.findById(idDetalle).isPresent())
+            return detallePedidoRepository.findById(idDetalle).get();
+        else
+            return null;
     }
 
 

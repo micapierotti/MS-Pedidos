@@ -193,6 +193,17 @@ public class PedidoResource {
             return ResponseEntity.notFound().build();
     }
 
+    @GetMapping(path = "/detalle/{idDetalle}")
+    @ApiOperation(value = "Busca un detalle por id")
+    public ResponseEntity<DetallePedido> getDetalleById(@PathVariable Integer idDetalle){
+        DetallePedido resultado = pedidoSrv.buscarDetallePorSuId(idDetalle);
+
+        if(resultado != null)
+            return ResponseEntity.ok(resultado);
+        else
+            return ResponseEntity.notFound().build();
+    }
+
     @PostMapping(path = "/existen-pedidos")
     @ApiOperation(value = "Devuelve si alguna de las obras recibidas tiene un pedido en curso")
     public boolean verificarExistenciaDePedidos(@RequestBody ArrayList<Integer> idsDeObras){
