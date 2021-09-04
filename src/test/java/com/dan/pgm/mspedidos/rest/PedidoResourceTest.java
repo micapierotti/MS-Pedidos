@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.ArrayList;
 
 import com.dan.pgm.mspedidos.domain.DetallePedido;
-import com.dan.pgm.mspedidos.domain.Obra;
 import com.dan.pgm.mspedidos.domain.Pedido;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -15,15 +14,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -78,7 +73,7 @@ class PedidoResourceTest {
         String server = urlServer+":"+puerto+"/"+apiPedido;
         System.out.println("SERVER "+server);
         Pedido unPedido = new Pedido();
-        unPedido.setObra(new Obra());
+        //unPedido.setObra(new Obra());
         HttpEntity<Pedido> requestPedido = new HttpEntity<>(unPedido);
         Throwable ex = assertThrows(
                 HttpClientErrorException.class,
@@ -97,7 +92,7 @@ class PedidoResourceTest {
         String server = urlServer+":"+puerto+"/"+apiPedido;
         System.out.println("SERVER "+server);
         Pedido unPedido = new Pedido();
-        unPedido.setObra(new Obra());
+        //unPedido.setObra(new Obra());
         ArrayList<DetallePedido> detalles = new ArrayList<DetallePedido>();
         detalles.add(new DetallePedido());
         unPedido.setDetalle(detalles);
@@ -112,7 +107,7 @@ class PedidoResourceTest {
         String server = urlServer+":"+puerto+"/"+apiPedido;
         System.out.println("SERVER "+server);
         Pedido unPedido = new Pedido();
-        unPedido.setObra(new Obra());
+        //unPedido.setObra(new Obra());
         HttpEntity<Pedido> requestPedido = new HttpEntity<>(unPedido);
         ResponseEntity<String> respuesta = testRestTemplate.exchange(server, HttpMethod.POST,requestPedido , String.class);
         assertTrue(respuesta.getStatusCode().equals(HttpStatus.BAD_REQUEST));
