@@ -8,6 +8,8 @@ import com.dan.pgm.mspedidos.services.ClienteService;
 import com.dan.pgm.mspedidos.services.MaterialService;
 import com.dan.pgm.mspedidos.services.PedidoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,9 @@ public class PedidoServiceImpl implements PedidoService {
     private static final String REST_API_OBRA_URL = "http://localhost:9000/api/obra/";
 
     @Autowired
+    CircuitBreakerFactory circuitBreakerFactory;
+
+    @Autowired
     MaterialService materialSrv;
 
     @Autowired
@@ -38,12 +43,12 @@ public class PedidoServiceImpl implements PedidoService {
     @Autowired
     JmsTemplate jms;
 
+
     @Override
     public Pedido crearPedido(Pedido p) {
         this.pedidoRepository.save(p);
         return enviarPedidoACorralon(p.getId());
     }
-
 
     private Pedido enviarPedidoACorralon(Integer pedidoId) {
         Pedido p = new Pedido();
@@ -286,23 +291,29 @@ public class PedidoServiceImpl implements PedidoService {
         List<Integer> idsObras = new ArrayList<>();
         String url = REST_API_OBRA_URL + finalURL;
         WebClient client = WebClient.create(url);
+        CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker");
 
-        try{
-            List<ObraDTO> obrasResult= client.get()
-                .uri(url).accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToFlux(ObraDTO.class)
-                .collectList()
-                .block();
+        return circuitBreaker.run(() -> {
+            try{
+                List<ObraDTO> obrasResult= client.get()
+                        .uri(url).accept(MediaType.APPLICATION_JSON)
+                        .retrieve()
+                        .bodyToFlux(ObraDTO.class)
+                        .collectList()
+                        .block();
 
-            obrasResult.forEach(obra -> idsObras.add(obra.getId()));
+                obrasResult.forEach(obra -> idsObras.add(obra.getId()));
 
-            return idsObras;
-        } catch (Exception e){
-            return idsObras;
-        }
+                return idsObras;
+            } catch (Exception e){
+                return idsObras;
+            }
+        }, throwable -> defaultIdsObras());
     }
 
+    private List<Integer> defaultIdsObras() {
+        return new ArrayList<Integer>();
+    }
 
     @Override
     public DetallePedido buscarDetallePorId(Integer idPedido, Integer idDetalle) {
@@ -353,16 +364,23 @@ public class PedidoServiceImpl implements PedidoService {
     public boolean existeObra(Integer idObra) {
         String url = REST_API_OBRA_URL + idObra;
         WebClient client = WebClient.create(url);
+        CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker");
 
-        try{
-            ObraDTO obraResult= client.get()
-                .uri(url).accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(ObraDTO.class)
-                .block();
-            return true;
-        } catch (Exception e){
-            return false;
-        }
+        return circuitBreaker.run(() -> {
+            try{
+                ObraDTO obraResult= client.get()
+                        .uri(url).accept(MediaType.APPLICATION_JSON)
+                        .retrieve()
+                        .bodyToMono(ObraDTO.class)
+                        .block();
+                return true;
+            } catch (Exception e){
+                return false;
+            }
+        }, throwable -> defaultExisteObra());
+    }
+
+    private boolean defaultExisteObra() {
+        return false;
     }
 }
