@@ -26,7 +26,7 @@ public class ClienteServiceImpl implements ClienteService {
     }
 
     @Override
-    public Double deudaCliente(Integer id) {
+    public Double deudaCliente (Integer id) {
         String obraUrl = REST_API_OBRA_URL + id;
         WebClient obraClient = WebClient.create(obraUrl);
         CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker");

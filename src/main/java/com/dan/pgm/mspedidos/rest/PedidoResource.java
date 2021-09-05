@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import com.dan.pgm.mspedidos.domain.EstadoPedido;
+import com.dan.pgm.mspedidos.dtos.PedidoDTO;
 import com.dan.pgm.mspedidos.services.MaterialService;
 import com.dan.pgm.mspedidos.services.PedidoService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -208,5 +209,11 @@ public class PedidoResource {
     @ApiOperation(value = "Devuelve si alguna de las obras recibidas tiene un pedido en curso")
     public boolean verificarExistenciaDePedidos(@RequestBody ArrayList<Integer> idsDeObras){
         return pedidoSrv.verificarExistenciaDePedidos(idsDeObras);
+    }
+
+    ///PARA MICROSERVICIO CUENTA CORRIENTE
+    @GetMapping("/facturasCliente/{id}")
+    public ResponseEntity<List<PedidoDTO>> facturasPorCliente(@PathVariable Integer clienteId){
+        return new ResponseEntity<>(pedidoSrv.facturasPorClienteId(clienteId), HttpStatus.OK);
     }
 }

@@ -2,6 +2,7 @@ package com.dan.pgm.mspedidos.services;
 
 import com.dan.pgm.mspedidos.domain.DetallePedido;
 import com.dan.pgm.mspedidos.domain.Pedido;
+import com.dan.pgm.mspedidos.dtos.PedidoDTO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,4 +24,5 @@ public interface PedidoService {
     boolean verificarExistenciaDePedidos(ArrayList<Integer> idsDeObras);
     boolean existeObra(Integer idObra);
     DetallePedido buscarDetallePorSuId(Integer idDetalle);
+    public List<PedidoDTO> facturasPorClienteId(Integer idCliente);
 }

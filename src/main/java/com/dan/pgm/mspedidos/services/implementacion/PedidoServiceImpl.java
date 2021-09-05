@@ -3,7 +3,9 @@ package com.dan.pgm.mspedidos.services.implementacion;
 import com.dan.pgm.mspedidos.database.DetallePedidoRepository;
 import com.dan.pgm.mspedidos.database.PedidoRepository;
 import com.dan.pgm.mspedidos.domain.*;
+import com.dan.pgm.mspedidos.dtos.DetallePedidoDTO;
 import com.dan.pgm.mspedidos.dtos.ObraDTO;
+import com.dan.pgm.mspedidos.dtos.PedidoDTO;
 import com.dan.pgm.mspedidos.services.ClienteService;
 import com.dan.pgm.mspedidos.services.MaterialService;
 import com.dan.pgm.mspedidos.services.PedidoService;
@@ -382,5 +384,27 @@ public class PedidoServiceImpl implements PedidoService {
 
     private boolean defaultExisteObra() {
         return false;
+    }
+
+    /////PARA MICROSERVICIO CUENTA CORRIENTE
+    @Override
+    public List<PedidoDTO> facturasPorClienteId(Integer idCliente) {
+        List<Pedido> facturasPorCliente = new ArrayList<>();
+        List<PedidoDTO> facturasPorClienteDTO = new ArrayList<>();
+        String finalURL = "?idCliente=" + idCliente;
+
+        List<Integer> listaIdsObras = getIdsObras(finalURL);
+
+        listaIdsObras.forEach( id -> facturasPorCliente.addAll(buscarPedidoPorIdObra(id)));
+
+
+        facturasPorClienteDTO = facturasPorCliente.stream()
+                .map(f -> new PedidoDTO(f.getId(),
+                        f.getDetalle().stream()
+                                .map( dp -> new DetallePedidoDTO(dp.getId(), dp.getIdProducto(), dp.getCantidad(), dp.getPrecio()))
+                                .collect(Collectors.toList())))
+                .collect(Collectors.toList());
+
+        return facturasPorClienteDTO;
     }
 }

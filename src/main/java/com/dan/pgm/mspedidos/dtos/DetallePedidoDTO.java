@@ -12,6 +12,7 @@ public class DetallePedidoDTO {
         this.cantidad = cantidad;
         this.precio = precio;
     }
+
     public DetallePedidoDTO() {
     }
     public Integer getId() {
